@@ -1,0 +1,301 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 全局禁止文本选择 */
+* {
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none;    /* Firefox */
+  -ms-user-select: none;     /* IE10+/Edge */
+  user-select: none;         /* Standard */
+  -webkit-tap-highlight-color: transparent; /* 禁用移动端点击高亮 */
+}
+
+/* 允许输入框和文本域选择文本 */
+input,
+textarea,
+[contenteditable="true"],
+.allow-select {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* 禁止移动端双击缩放 */
+html {
+  touch-action: manipulation;
+}
+
+/* 动态视口高度解决方案 - 解决Safari地址栏遮挡问题 */
+:root {
+  --vh: 1vh;
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* 添加自定义动画 */
+@keyframes recording-ping {
+  75%, 100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes recording-pulse {
+  50% {
+    opacity: .3;
+  }
+}
+
+
+.animate-recording-ping {
+  animation: recording-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.animate-recording-pulse {
+  animation: recording-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 隐藏滚动条 */
+.chat-container::-webkit-scrollbar {
+  display: none;
+}
+
+
+@keyframes moveAndScale {
+  0% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  25% {
+    transform: translate(10%, 10%) scale(1.1) rotate(90deg);
+  }
+  50% {
+    transform: translate(5%, -5%) scale(0.9) rotate(180deg);
+  }
+  75% {
+    transform: translate(-10%, 5%) scale(1.05) rotate(270deg);
+  }
+  100% {
+    transform: translate(0, 0) scale(1) rotate(360deg);
+  }
+}
+
+@keyframes moveAndScaleAlt {
+  0% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  33% {
+    transform: translate(-5%, 10%) scale(1.2) rotate(-120deg);
+  }
+  66% {
+    transform: translate(10%, -5%) scale(0.8) rotate(-240deg);
+  }
+  100% {
+    transform: translate(0, 0) scale(1) rotate(-360deg);
+  }
+}
+
+/* 通用开发中锁定样式 */
+@layer components {
+  .dev-locked {
+    @apply relative;
+  }
+  
+  .dev-locked::before {
+    content: '';
+    @apply absolute inset-0 bg-gray-900/20 backdrop-blur-[1px] rounded-lg z-10 pointer-events-none;
+  }
+  
+  .dev-locked::after {
+    content: '';
+    @apply absolute inset-0 z-20 pointer-events-none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='%23374151'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' d='M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z' /%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 3rem 3rem;
+  }
+  
+  .dev-locked .dev-locked-overlay {
+    @apply absolute inset-0 flex flex-col items-center justify-center z-30 pointer-events-none text-gray-600;
+  }
+  
+  .dev-locked .dev-locked-text {
+    @apply mt-4 text-sm font-medium text-center px-4;
+  }
+  
+  /* 禁用交互 */
+  .dev-locked {
+    @apply pointer-events-none select-none;
+  }
+}
+
+/* 动画增强 */
+@layer utilities {
+  .dev-locked-animate {
+    /* animation: dev-locked-pulse 10s ease-in-out infinite; */
+  }
+  
+  @keyframes dev-locked-pulse {
+    0%, 100% {
+      opacity: 0.95;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+  }
+  
+  /* 浮动动画 */
+  .animate-float-slow {
+    animation: float-slow 6s ease-in-out infinite;
+  }
+  
+  .animate-float-reverse {
+    animation: float-reverse 8s ease-in-out infinite;
+  }
+  
+  .animate-delay-1000 {
+    animation-delay: 1s;
+  }
+  
+  .animate-delay-2000 {
+    animation-delay: 2s;
+  }
+  
+  @keyframes float-slow {
+    0%, 100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-20px) rotate(180deg);
+    }
+  }
+  
+  @keyframes float-reverse {
+    0%, 100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+    50% {
+      transform: translateY(15px) rotate(-180deg);
+    }
+  }
+  
+  /* 文本截断工具类 */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* 智能视口高度工具类 */
+@layer utilities {
+  /* 动态视口高度 - 会随键盘弹出变化 */
+  .h-screen-dynamic {
+    height: calc(var(--vh, 1vh) * 100);
+  }
+  
+  .min-h-screen-dynamic {
+    min-height: calc(var(--vh, 1vh) * 100);
+  }
+  
+  .max-h-screen-dynamic {
+    max-height: calc(var(--vh, 1vh) * 100);
+  }
+  
+  /* 稳定视口高度 - 不受键盘影响，适合全屏布局 */
+  .h-screen-stable {
+    height: calc(var(--vh-stable, 1vh) * 100);
+  }
+  
+  .min-h-screen-stable {
+    min-height: calc(var(--vh-stable, 1vh) * 100);
+  }
+  
+  .max-h-screen-stable {
+    max-height: calc(var(--vh-stable, 1vh) * 100);
+  }
+  
+  /* 键盘状态相关样式 */
+  html[data-keyboard-open="true"] .keyboard-hide {
+    display: none;
+  }
+  
+  html[data-keyboard-open="false"] .keyboard-show {
+    display: none;
+  }
+}
