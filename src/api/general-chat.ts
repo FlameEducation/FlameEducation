@@ -8,6 +8,7 @@ export interface GeneralChatSession {
   provider: string;
   model: string;
   prompt?: string;
+  thinkingStatus?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -39,8 +40,8 @@ export const deleteSession = (uuid: string) => {
   return request.delete(`/api/general-chat/session/${uuid}`) as unknown as Promise<boolean>;
 };
 
-export const updateSession = (uuid: string, title?: string, provider?: string, model?: string, prompt?: string) => {
-  return request.put(`/api/general-chat/session/${uuid}`, { title, provider, model, prompt }) as unknown as Promise<boolean>;
+export const updateSession = (uuid: string, title?: string, provider?: string, model?: string, prompt?: string, thinkingStatus?: number) => {
+  return request.put(`/api/general-chat/session/${uuid}`, { title, provider, model, prompt, thinkingStatus }) as unknown as Promise<boolean>;
 };
 
 export const streamGeneralChat = async (

@@ -6,6 +6,8 @@ import { MindMapView } from './tools/MindMapView.tsx';
 import { ImageView } from './tools/ImageView.tsx';
 import { ExerciseInfoCard } from '@/pages/chat/Layout/Chat/History/ai/ExerciseInfoCard.tsx';
 import ReactMarkdown from 'react-markdown';
+import remarkBreaks from 'remark-breaks';
+import rehypeRaw from 'rehype-raw';
 import { ChatMessage } from "@/types/ChatMessage.ts";
 import { useSearchParams } from "react-router-dom";
 import { useChatHistoryContext } from "@/pages/chat/context/ChatHistoryContext.tsx";
@@ -55,7 +57,9 @@ export const AiMessageCard = ({ messageId }: { messageId: string }) => {
     content,
     imageUuid,
     blackboardUuid,
+    blackboardTitle,
     mindMapUuid,
+    mindMapTitle,
     imageUrl,
     audioUrl,
     exerciseUuid,
@@ -200,30 +204,53 @@ export const AiMessageCard = ({ messageId }: { messageId: string }) => {
           </div>
 
           <div className="prose prose-slate max-w-none text-base leading-relaxed text-gray-700">
-            <ReactMarkdown>{content}</ReactMarkdown>
+            <ReactMarkdown 
+              remarkPlugins={[remarkBreaks]} 
+              rehypePlugins={[rehypeRaw]}
+              components={{
+                strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+                em: ({ children }) => <em className="italic">{children}</em>,
+              }}
+            >
+              {content}
+            </ReactMarkdown>
           </div>
 
           {!isLoading && blackboardUuid && paramLessonUuid && (
             <div className="mt-6">
-              <BlackBoardView sessionId={paramLessonUuid} blackboardUuid={blackboardUuid} />
+              <BlackBoardView 
+                sessionId={paramLessonUuid} 
+                blackboardUuid={blackboardUuid} 
+                title={blackboardTitle} 
+                messageId={messageId}
+              />
             </div>
           )}
 
           {!isLoading && mindMapUuid && (
             <div className="mt-6">
-              <MindMapView mindMapUuid={mindMapUuid} />
+              <MindMapView 
+                mindMapUuid={mindMapUuid} 
+                title={mindMapTitle} 
+                messageId={messageId}
+              />
             </div>
           )}
 
           {(imageUrl || imageUuid) && (
             <div className="mt-6">
-              <ImageView imageUrl={imageUrl} imageUuid={imageUuid} className="rounded-xl overflow-hidden shadow-sm border border-gray-100" />
+              <ImageView 
+                imageUrl={imageUrl} 
+                imageUuid={imageUuid} 
+                className="rounded-xl overflow-hidden shadow-sm border border-gray-100" 
+                messageId={messageId}
+              />
             </div>
           )}
 
           {exerciseUuid && (
             <div className="mt-6">
-              <ExerciseInfoCard exerciseUuid={exerciseUuid} />
+              <ExerciseInfoCard exerciseUuid={exerciseUuid} messageId={messageId} />
             </div>
           )}
         </div>

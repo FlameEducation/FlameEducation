@@ -33,6 +33,8 @@ interface ProviderOption {
   name: string;
   description: string;
   logo: React.ReactNode;
+  defaultBaseUrl?: string;
+  allowCustomModels?: boolean;
 }
 
 export const PROVIDER_OPTIONS: ProviderOption[] = [
@@ -45,6 +47,7 @@ export const PROVIDER_OPTIONS: ProviderOption[] = [
         豆
       </div>
     ),
+    allowCustomModels: true,
   },
   {
     code: 'google',
@@ -55,6 +58,7 @@ export const PROVIDER_OPTIONS: ProviderOption[] = [
         G
       </div>
     ),
+    allowCustomModels: true,
   },
   {
     code: 'openai',
@@ -65,6 +69,31 @@ export const PROVIDER_OPTIONS: ProviderOption[] = [
         O
       </div>
     ),
+    allowCustomModels: true,
+  },
+  {
+    code: 'deepseek',
+    name: 'DeepSeek',
+    description: '深度求索大语言模型',
+    logo: (
+      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-600 text-lg font-bold text-white shadow">
+        D
+      </div>
+    ),
+    defaultBaseUrl: 'https://api.deepseek.com',
+    allowCustomModels: true,
+  },
+  {
+    code: 'zhipu',
+    name: '智谱清言',
+    description: '智谱 AI 大语言模型',
+    logo: (
+      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-blue-400 to-purple-600 text-lg font-bold text-white shadow">
+        Z
+      </div>
+    ),
+    defaultBaseUrl: 'https://open.bigmodel.cn/api/paas/v4/',
+    allowCustomModels: true,
   },
 ];
 
@@ -129,9 +158,13 @@ const MultiStepProviderDialog: React.FC<MultiStepProviderDialogProps> = ({
   }, [mode, editingProvider]);
 
   const handleProviderSelect = (code: string) => {
+    const selectedOption = PROVIDER_OPTIONS.find(p => p.code === code);
+    const defaultBaseUrl = selectedOption?.defaultBaseUrl || '';
+    
     setFormData(prev => ({
       ...prev,
       providerName: code,
+      baseUrl: defaultBaseUrl,
     }));
   };
 
@@ -230,7 +263,7 @@ const MultiStepProviderDialog: React.FC<MultiStepProviderDialogProps> = ({
           <h3 className="text-base font-semibold text-slate-900">选择服务商</h3>
           <p className="mt-1 text-xs text-slate-600">请选择您要配置的 AI 服务商</p>
         </div>
-        <div className="flex gap-3 justify-center">
+        <div className="flex flex-wrap gap-3 justify-center">
           {availableProviders.map(provider => (
             <div
               key={provider.code}
@@ -278,7 +311,11 @@ const MultiStepProviderDialog: React.FC<MultiStepProviderDialogProps> = ({
     handleFieldChange('models', newModels);
   };
 
-  const renderStep2 = () => (
+  const renderStep2 = () => {
+    const selectedProviderOption = PROVIDER_OPTIONS.find(p => p.code === formData.providerName);
+    const showModels = selectedProviderOption?.allowCustomModels !== false;
+
+    return (
     <div className="space-y-4 py-4">
       <div className="text-center">
         <h3 className="text-base font-semibold text-slate-900">配置信息</h3>
@@ -314,6 +351,7 @@ const MultiStepProviderDialog: React.FC<MultiStepProviderDialogProps> = ({
           />
           <p className="text-xs text-slate-500">如需使用代理，请输入代理地址</p>
         </div>
+        {showModels && (
         <div className="space-y-1.5">
           <Label htmlFor="models" className="text-sm">
             可用模型 <span className="text-slate-400">(可选)</span>
@@ -342,13 +380,15 @@ const MultiStepProviderDialog: React.FC<MultiStepProviderDialogProps> = ({
           </div>
           <p className="text-xs text-slate-500">请输入该服务商支持的模型列表，按回车添加</p>
         </div>
+        )}
       </div>
     </div>
   );
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-base">
             {mode === 'edit' ? '编辑文本生成配置' : '添加文本生成配置'}

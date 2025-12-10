@@ -73,6 +73,7 @@ function App() {
           <Route path="/test/mindmap" element={<MindMapTest/>}/>
           <Route path="/test/avatar-animation" element={<AvatarAnimationTest/>}/>
           
+          
         </Routes>
         <Toaster/>
       </ThemeProvider>

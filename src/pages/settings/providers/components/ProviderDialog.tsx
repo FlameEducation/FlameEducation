@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AiProviderConfig, CreateAiProviderConfigRequest, UpdateAiProviderConfigRequest } from '@/api/ai-provider';
-import { SceneInfo, SceneType } from '@/api/sceneConfig';
+import { SceneInfo, SceneType } from '@/api/promptConfig';
 import { Loader2, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -43,6 +43,10 @@ const PROVIDER_FIELDS: Record<string, { requireProxy?: boolean; fields: string[]
   doubao: {
     requireProxy: false,
     fields: ['displayName', 'modelName', 'serviceKey'],
+  },
+  deepseek: {
+    requireProxy: true,
+    fields: ['displayName', 'modelName', 'proxyUrl', 'serviceKey'],
   },
 };
 

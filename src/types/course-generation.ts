@@ -9,9 +9,18 @@ export interface CourseGenerationStatusVo {
   sessionUuid: string;
 
   /**
-   * 状态：GENERATING（生成中）、COMPLETED（完成）、FAILED（失败）
+   * 状态：
+   * INITIALIZING - 初始化中
+   * GENERATING_STRUCTURE - 生成结构中
+   * REFINING - 优化中
+   * GENERATING_OUTLINES - 生成大纲中
+   * PERSISTING - 持久化中
+   * GENERATING - 生成中 (通用状态)
+   * COMPLETED - 已完成
+   * FAILED - 失败
+   * PARTIAL_SUCCESS - 部分成功
    */
-  status: 'GENERATING' | 'COMPLETED' | 'FAILED';
+  status: 'INITIALIZING' | 'GENERATING_STRUCTURE' | 'REFINING' | 'GENERATING_OUTLINES' | 'PERSISTING' | 'GENERATING' | 'COMPLETED' | 'FAILED' | 'PARTIAL_SUCCESS';
 
   /**
    * 当前步骤：INITIALIZING、GENERATING_STRUCTURE、REFINING、GENERATING_OUTLINES、PERSISTING

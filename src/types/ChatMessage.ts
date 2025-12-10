@@ -9,8 +9,11 @@ export interface ChatMessage {
 
   // 附件相关
   blackboardUuid: string;
+  blackboardTitle?: string; // 新增
   mindMapUuid?: string;
+  mindMapTitle?: string; // 新增
   imageUuid: string;
+  imageTitle?: string; // 新增
   exerciseUuid: string;
   
   // 无答案选择题数据（直接在消息中展示）

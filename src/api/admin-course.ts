@@ -98,23 +98,29 @@ export const deleteCourse = async (uuid: string): Promise<boolean> => {
 
 // 更新课程状态
 export const updateCourseStatus = async (uuid: string, status: number): Promise<boolean> => {
-  return request.post<any, boolean>('/api/admin/course/updateStatus', { 
-    uuid, 
+  return request.post<any, boolean>('/api/admin/course/updateStatus', {
+    uuid,
     field: 'status',
-    value: status 
+    value: status
   });
 };
 
-// 获取可用的 Prompt 模板列表(用于绑定) - 获取所有场景类型的Prompt
-export const getPromptTemplates = async (): Promise<PromptTemplate[]> => {
-  try {
-    // 直接调用获取所有模板的接口，不再区分场景类型
-    const response = await request.post<any, PromptTemplate[]>('/api/admin/prompt/list', {});
-    return response || [];
-  } catch (error) {
-    console.error('Failed to fetch prompt templates:', error);
-    return [];
-  }
+
+// 导出课程
+export const exportCourse = async (uuid: string): Promise<Blob> => {
+  return request.get(`/api/admin/course/export`, {
+    params: { uuid },
+    responseType: 'blob'
+  });
+};
+
+// 导入课程
+export const importCourse = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return request.post<any, string>('/api/admin/course/import', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
 };
 
 // 获取课程的Prompt绑定信息

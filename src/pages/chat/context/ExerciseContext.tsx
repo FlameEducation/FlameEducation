@@ -273,7 +273,8 @@ export const ExerciseProvider: React.FC<ExerciseProviderProps> = ({children}) =>
 
   const isExerciseCompleted = useCallback((exerciseId: string): boolean => {
     const exercise = dataMapRef.current.get(exerciseId);
-    return exercise?.status?.isCompleted ?? exercise?.isCompleted ?? false;
+    // @ts-ignore - 兼容不同数据结构
+    return exercise?.status?.isCompleted ?? exercise?.isCompleted ?? exercise?.submitted ?? false;
   }, []);
 
   const contextValue: ExerciseContextType = {

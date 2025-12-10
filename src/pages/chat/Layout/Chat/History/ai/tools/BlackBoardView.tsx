@@ -1,19 +1,24 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {createPortal} from 'react-dom';
 import {cn} from '@/lib/utils.ts';
 import {DynamicComponentRenderer} from '@/components/sendbox';
 import {useEventBus} from "@/pages/chat/context/EventBusContext.tsx";
 import {useChatHistoryContext} from "@/pages/chat/context/ChatHistoryContext.tsx";
+import {useBlackboardContext} from "@/pages/chat/context/BlackboardContext.tsx";
 
 interface BlackBoardViewProps {
   sessionId: string;
   blackboardUuid: string;
+  title?: string;
+  messageId?: string;
 }
 
 export const BlackBoardView: React.FC<BlackBoardViewProps> = (
   {
     sessionId,
     blackboardUuid,
+    title,
+    messageId
   }) => {
   // 使用 React 的 state 来控制模态框的显示状态，而不是直接操作 DOM
   const [showModal, setShowModal] = React.useState(false);
@@ -21,7 +26,29 @@ export const BlackBoardView: React.FC<BlackBoardViewProps> = (
   const [isRegenerating, setIsRegenerating] = React.useState(false);
 
   const eventBus = useEventBus();
-  const { setActiveMindMapUuid } = useChatHistoryContext();
+  const { setActiveMindMapUuid, setActiveBlackboardUuid, setIsRightPanelOpen, chatHistory } = useChatHistoryContext();
+  const { getBlackboardState } = useBlackboardContext();
+
+  const blackboardState = getBlackboardState(blackboardUuid);
+  const displayTitle = blackboardState?.title || title || '知识小黑板';
+  const hasOpenedRef = useRef(false);
+
+  // 自动打开右侧面板逻辑
+  useEffect(() => {
+    // 如果是宽屏模式，且是最后一条消息，且未自动打开过
+    if (window.innerWidth >= 768 && !hasOpenedRef.current && blackboardUuid) {
+      const lastMessage = chatHistory[chatHistory.length - 1];
+      const isLastMessage = messageId && lastMessage && lastMessage.uuid === messageId;
+      
+      if (isLastMessage) {
+        // 直接调用 context 方法，不依赖组件内部状态
+        setActiveMindMapUuid(null);
+        setActiveBlackboardUuid(blackboardUuid);
+        setIsRightPanelOpen(true);
+        hasOpenedRef.current = true;
+      }
+    }
+  }, [blackboardUuid, messageId, chatHistory, setActiveBlackboardUuid, setIsRightPanelOpen, setActiveMindMapUuid]);
 
   const onRegenerateStateChange = () => {
     console.log('onRegenerateStateChange');
@@ -30,7 +57,7 @@ export const BlackBoardView: React.FC<BlackBoardViewProps> = (
 
   // 检查屏幕尺寸
   const checkScreenSize = React.useCallback(() => {
-    setIsLargeScreen(window.innerWidth >= 1024);
+    setIsLargeScreen(window.innerWidth >= 768);
   }, []);
 
   // 处理屏幕尺寸变化
@@ -86,7 +113,7 @@ export const BlackBoardView: React.FC<BlackBoardViewProps> = (
           <div className="flex items-center justify-between p-4 border-b">
             <h3 className="text-lg font-medium bg-gradient-to-r from-blue-600 to-blue-400 
                           bg-clip-text text-transparent">
-              交互演示
+              {displayTitle}
             </h3>
             <button
               className={cn(
@@ -120,6 +147,8 @@ export const BlackBoardView: React.FC<BlackBoardViewProps> = (
   const handleShowBlackboard = () => {
     if (isLargeScreen) {
       setActiveMindMapUuid(null);
+      setActiveBlackboardUuid(blackboardUuid);
+      setIsRightPanelOpen(true);
       eventBus.emit('showBlackboard', {uuid: blackboardUuid});
     } else {
       openModal();
@@ -141,7 +170,7 @@ export const BlackBoardView: React.FC<BlackBoardViewProps> = (
                 </svg>
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-medium text-white">知识小黑板</span>
+                <span className="text-sm font-medium text-white">{displayTitle}</span>
                 <span className="text-xs text-purple-100">点击按钮查看详细内容</span>
               </div>
             </div>

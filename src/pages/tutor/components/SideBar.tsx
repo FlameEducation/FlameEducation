@@ -143,7 +143,7 @@ const SideBar: React.FC<SideBarProps> = (
             )}
             
             <div className={cn(
-                "bg-white border-r border-gray-200 flex flex-col transition-all duration-300 h-full z-[100]",
+                "bg-white border-r border-gray-200 flex flex-col transition-all duration-300 h-full z-[21]",
                 // Mobile: fixed, Desktop: relative/flex-item
                 "fixed md:relative inset-y-0 left-0",
                 sidebarOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full md:translate-x-0 md:w-0 opacity-0 md:opacity-100 overflow-hidden"

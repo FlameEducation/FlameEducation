@@ -161,7 +161,7 @@ const CourseDetailPage: React.FC = () => {
                         </div>
                         <div className="flex items-center gap-1">
                             <BookOpen className="w-4 h-4"/>
-                            {courseDetail.totalDuration} 分钟
+                            {courseDetail.totalDurationInMinutes} 分钟
                         </div>
                     </div>
                 </div>
@@ -200,7 +200,7 @@ const CourseDetailPage: React.FC = () => {
                         <div className="p-4 space-y-6">
 
                             {/* 学习收获 */}
-                            <Card>
+                            {/* <Card>
                                 <div className="p-4">
                                     <h2 className="text-lg font-bold mb-4">学习收获</h2>
                                     <div className="space-y-3">
@@ -212,7 +212,7 @@ const CourseDetailPage: React.FC = () => {
                                         )) || []}
                                     </div>
                                 </div>
-                            </Card>
+                            </Card> */}
                         </div>
                     ) : (
                         <div className="p-4 space-y-4">
@@ -286,13 +286,13 @@ const CourseDetailPage: React.FC = () => {
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <Clock className="w-4 h-4"/>
-                                    {courseDetail.totalDuration} 分钟
+                                    {courseDetail.totalDurationInMinutes} 分钟
                                 </div>
                             </div>
 
 
                             {/* 学习收获 */}
-                            <div>
+                            {/* <div>
                                 <h2 className="text-xl font-bold mb-4">学习收获</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {courseDetail.whatYouWillLearn?.map((item, index) => (
@@ -302,7 +302,7 @@ const CourseDetailPage: React.FC = () => {
                                         </div>
                                     )) || []}
                                 </div>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
 

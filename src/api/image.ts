@@ -4,6 +4,7 @@ import request from '@/utils/request';
 export interface ImageGenerateStatusResponse {
   uuid: string;
   url: string;  // 图片生成后的URL
+  title: string; // 图片标题
   generateOver: boolean;  // 是否生成完成
   generateError: boolean; // 是否生成出错
 }

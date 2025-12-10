@@ -1,21 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button.tsx';
 import { BookOpen, CheckCircle, Clock, Trophy, Loader2, RefreshCw } from 'lucide-react';
 import { useExerciseContext } from '@/pages/chat/context/ExerciseContext.tsx';
 import { ExerciseResultData } from '@/api/exercise.ts';
 import { NoAnswerChoiceCard } from './NoAnswerChoiceCard.tsx';
+import { useChatHistoryContext } from '@/pages/chat/context/ChatHistoryContext.tsx';
+import { useEventBus } from '@/pages/chat/context/EventBusContext.tsx';
 
 interface ExerciseInfoCardProps {
   exerciseUuid: string;
+  messageId?: string;
 }
 
 export const ExerciseInfoCard: React.FC<ExerciseInfoCardProps> = ({
-  exerciseUuid
+  exerciseUuid,
+  messageId
 }) => {
-  const { startExercise, viewExercise, getExerciseById, loadExerciseData, isExerciseCompleted } = useExerciseContext();
+  const { startExercise, viewExercise, getExerciseById, loadExerciseData, isExerciseCompleted, setRightPanelExerciseId } = useExerciseContext();
+  const { setIsRightPanelOpen, chatHistory } = useChatHistoryContext();
+  const eventBus = useEventBus();
   const [exerciseData, setExerciseData] = useState<ExerciseResultData | null>(() => getExerciseById(exerciseUuid));
-  const [loading, setLoading] = useState(!exerciseData);
+  // 如果没有数据或者数据中没有标题（说明是SSE推送的初始数据），则显示加载状态
+  const [loading, setLoading] = useState(!exerciseData || !exerciseData.title);
   const [error, setError] = useState<string | null>(null);
+  const hasOpenedRef = useRef(false);
+
+  // 自动打开右侧面板逻辑
+  useEffect(() => {
+    // 如果是宽屏模式，且是最后一条消息，且未自动打开过
+    const isMobile = window.innerWidth < 768;
+    if (!isMobile && !hasOpenedRef.current && exerciseUuid) {
+      const lastMessage = chatHistory[chatHistory.length - 1];
+      const isLastMessage = messageId && lastMessage && lastMessage.uuid === messageId;
+      
+      if (isLastMessage) {
+        setRightPanelExerciseId(exerciseUuid);
+        setIsRightPanelOpen(true);
+        hasOpenedRef.current = true;
+      }
+    }
+  }, [exerciseUuid, messageId, chatHistory, setRightPanelExerciseId, setIsRightPanelOpen]);
 
   // 重试加载
   const handleRetry = async () => {
@@ -37,7 +61,8 @@ export const ExerciseInfoCard: React.FC<ExerciseInfoCardProps> = ({
   useEffect(() => {
     const fetchData = async () => {
       const cached = getExerciseById(exerciseUuid);
-      if (cached) {
+      // 只有当缓存数据存在且包含标题时，才直接使用缓存
+      if (cached && cached.title) {
         setExerciseData(cached);
         setLoading(false);
         return;
@@ -154,7 +179,6 @@ export const ExerciseInfoCard: React.FC<ExerciseInfoCardProps> = ({
       />
     );
   }
-
   // 处理按钮点击
   const handleButtonClick = () => {
     if (completed) {
@@ -162,6 +186,8 @@ export const ExerciseInfoCard: React.FC<ExerciseInfoCardProps> = ({
     } else {
       startExercise(exerciseUuid);
     }
+    setIsRightPanelOpen(true);
+    eventBus.emit('showExercise', { uuid: exerciseUuid });
   };
 
   return (

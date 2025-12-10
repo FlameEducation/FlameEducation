@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Menu, Settings } from 'lucide-react';
+import { Menu, SlidersHorizontal } from 'lucide-react';
 
 import {
   getUserSessions, deleteSession, GeneralChatSession, updateSession
@@ -37,6 +37,11 @@ import { AudioPlayStatusProvider } from '@/pages/chat/context/AudioContext.tsx';
 
 // Components
 import ChatComponent from '@/pages/chat/Layout/Chat';
+import {ExerciseProvider} from "@/pages/chat/context/ExerciseContext.tsx";
+import {ImageProvider} from "@/pages/chat/context/ImageContext.tsx";
+import {BlackboardProvider} from "@/pages/chat/context/BlackboardContext.tsx";
+import {MindMapProvider} from "@/pages/chat/context/MindMapContext.tsx";
+import {ClassStatusContextProvider} from "@/pages/chat/context/ClassStatusContext.tsx";
 
 
 // Header Model Selector
@@ -78,7 +83,8 @@ const InnerTutorPage = () => {
   // 状态管理
   const [sessions, setSessions] = useState<GeneralChatSession[]>([]);
   const [currentSession, setCurrentSession] = useState<GeneralChatSession | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // 默认在宽屏下打开侧边栏，移动端关闭
+  const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 768 : true);
   const [selectedModelUuid, setSelectedModelUuid] = useState<string | null>(null);
   const [modelOptions, setModelOptions] = useState<{ uuid: string; label: string; provider: string }[]>([]);
   // 教学模式相关状态 - 使用全局设置
@@ -88,6 +94,7 @@ const InnerTutorPage = () => {
   // Prompt Dialog State
   const [promptDialogOpen, setPromptDialogOpen] = useState(false);
   const [promptValue, setPromptValue] = useState('');
+  const [thinkingStatus, setThinkingStatus] = useState<number>(-1);
 
   // 加载会话列表
   useEffect(() => {
@@ -143,6 +150,7 @@ const InnerTutorPage = () => {
   const handleOpenPromptDialog = () => {
     if (currentSession) {
       setPromptValue(currentSession.prompt || '');
+      setThinkingStatus(currentSession.thinkingStatus ?? -1);
       setPromptDialogOpen(true);
     }
   };
@@ -152,13 +160,13 @@ const InnerTutorPage = () => {
 
     try {
       // Update local state
-      const updatedSession = { ...currentSession, prompt: promptValue };
+      const updatedSession = { ...currentSession, prompt: promptValue, thinkingStatus };
       setCurrentSession(updatedSession);
       setSessions(prev => prev.map(s => s.uuid === currentSession.uuid ? updatedSession : s));
 
       // Update backend
       if (currentSession.uuid !== 'draft') {
-        await updateSession(currentSession.uuid, undefined, undefined, undefined, promptValue);
+        await updateSession(currentSession.uuid, undefined, undefined, undefined, promptValue, thinkingStatus);
         toast.success('提示词已更新');
       }
       setPromptDialogOpen(false);
@@ -267,8 +275,19 @@ const InnerTutorPage = () => {
         setSidebarOpen={setSidebarOpen}
         sessions={sessions}
         currentSession={currentSession}
-        setCurrentSession={handleSessionSelect}
-        handleCreateSession={handleCreateSession}
+        setCurrentSession={(session) => {
+          handleSessionSelect(session);
+          // 移动端选择会话后自动关闭侧边栏
+          if (window.innerWidth < 768) {
+            setSidebarOpen(false);
+          }
+        }}
+        handleCreateSession={() => {
+          handleCreateSession();
+          if (window.innerWidth < 768) {
+            setSidebarOpen(false);
+          }
+        }}
         handleDeleteSession={handleDeleteSession}
       />
 
@@ -307,7 +326,7 @@ const InnerTutorPage = () => {
                         onClick={handleOpenPromptDialog} 
                         className="hidden md:flex"
                       >
-                        <Settings className="w-5 h-5 text-gray-600" />
+                        <SlidersHorizontal className="w-5 h-5 text-gray-600" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -329,7 +348,7 @@ const InnerTutorPage = () => {
                   onClick={handleOpenPromptDialog} 
                   className="md:hidden"
                 >
-                  <Settings className="w-5 h-5 text-gray-600" />
+                  <SlidersHorizontal className="w-5 h-5 text-gray-600" />
                 </Button>
               </>
             )}
@@ -371,6 +390,26 @@ const InnerTutorPage = () => {
             <DialogTitle>设置提示词 (System Prompt)</DialogTitle>
           </DialogHeader>
           <div className="py-4">
+            <div className="mb-4">
+              <label className="text-sm font-medium mb-2 block">思考状态</label>
+              <div className="flex gap-2">
+                {[
+                  { value: -1, label: '默认' },
+                  { value: 0, label: '关闭' },
+                  { value: 1, label: '开启' },
+                ].map((option) => (
+                  <Button
+                    key={option.value}
+                    variant={thinkingStatus === option.value ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setThinkingStatus(option.value)}
+                    className="flex-1"
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
             <Textarea 
               value={promptValue} 
               onChange={(e) => setPromptValue(e.target.value)}
@@ -395,7 +434,15 @@ const TutorPage: React.FC = () => {
   return (
     <AudioPlayStatusProvider>
       <GlobalSettingsProvider>
-        <InnerTutorPage />
+        <ExerciseProvider>
+          <ImageProvider>
+            <BlackboardProvider>
+              <MindMapProvider>
+                <InnerTutorPage />
+              </MindMapProvider>
+            </BlackboardProvider>
+          </ImageProvider>
+        </ExerciseProvider>
       </GlobalSettingsProvider>
     </AudioPlayStatusProvider>
   );

@@ -151,7 +151,7 @@ export const TrueFalseExerciseComponent: React.FC<TrueFalseExerciseProps> = ({
   return (
     <div className="h-full flex flex-col bg-white">
       {/* 顶部标题区 */}
-      <div className="px-5 py-3 sm:px-8 sm:py-4 bg-orange-50 flex-shrink-0">
+      <div className="px-5 py-3 sm:px-8 sm:py-4 pr-12 bg-orange-50 flex-shrink-0">
         <h2 className="text-lg sm:text-xl font-bold text-orange-900">{exerciseData.title}</h2>
       </div>
 

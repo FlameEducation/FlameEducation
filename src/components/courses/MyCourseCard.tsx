@@ -102,13 +102,13 @@ export const MyCourseCard: React.FC<MyCourseCardProps> = ({ course }) => {
               ))}
             </div>
 
-            {/* 成就提示 */}
-            {course.nextAchievement && (
-              <div className="flex items-center gap-1.5 text-xs text-amber-500">
-                <Trophy className="w-3.5 h-3.5" />
-                <span>再完成{course.nextAchievement.remainingUnits}个单元，获得"{course.nextAchievement.title}"</span>
-              </div>
-            )}
+            {/*/!* 成就提示 *!/*/}
+            {/*{course.nextAchievement && (*/}
+            {/*  <div className="flex items-center gap-1.5 text-xs text-amber-500">*/}
+            {/*    <Trophy className="w-3.5 h-3.5" />*/}
+            {/*    <span>再完成{course.nextAchievement.remainingUnits}个单元，获得"{course.nextAchievement.title}"</span>*/}
+            {/*  </div>*/}
+            {/*)}*/}
           </div>
         </div>
       </div>

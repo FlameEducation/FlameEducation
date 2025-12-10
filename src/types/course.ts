@@ -72,9 +72,12 @@ export interface SubjectCategoriesResponse {
  */
 export interface AutoCourseStartRequest {
   topic: string;
-  difficulty?: string; // easy/medium/hard
+  targetAudience?: string; // preschool/children/teenager/youth/adult/middleAged/elderly
+  complexity?: string; // shallow/moderate/comprehensive/deep
   language?: string;   // zh/en
   suggestedChapterCount?: number;
+  aiServiceProvider?: string;
+  aiModelName?: string;
 }
 
 /**
@@ -100,6 +103,9 @@ export interface LessonDraft {
   title: string;
   description: string;
   durationSeconds: number;
+  currentLessonKnowledgePoints?: string[];
+  previousKnowledgePoints?: string[];
+  futureKnowledgePoints?: string[];
 }
 
 /**

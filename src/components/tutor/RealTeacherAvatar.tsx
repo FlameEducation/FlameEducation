@@ -28,7 +28,7 @@ interface RealTeacherAvatarProps {
 const defaultTeacherProfiles = {
     'teacher-1': {
         name: '萱萱老师',
-        avatar: '/images/teacher-xuanxuan.png',
+        avatar: '/images/teacher-cheng.png',
         specialty: 'Python基础',
         style: '温柔耐心',
     },

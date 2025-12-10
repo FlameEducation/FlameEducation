@@ -4,7 +4,7 @@ import { Settings, Loader2, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils.ts';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { useClassStatusContext } from "@/pages/chat/context/ClassStatusContext.tsx";
-import { GameSoundService } from '@/services/soundService.ts'; // 直接导入音效服务
+import { GameSoundService } from '@/services/soundService.ts';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip.tsx';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { EnhancedTreasureBag } from '@/pages/chat/components/EnhancedTreasureBag.tsx';
@@ -16,6 +16,10 @@ import confetti from 'canvas-confetti';
 interface ChatHeaderProps {
   onOpenSettings: () => void;
   onOpenLessonInfo: () => void;
+  zoomLevel: number;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  onResetZoom: () => void;
 }
 
 // 使用 canvas-confetti 的烟花效果（从上到下）
@@ -240,6 +244,10 @@ export const triggerGlobalTitleAnimation = () => {
 export const ChatHeader: React.FC<ChatHeaderProps> = ({
   onOpenSettings,
   onOpenLessonInfo,
+  zoomLevel,
+  onZoomIn,
+  onZoomOut,
+  onResetZoom,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLessonInfoOpen, setIsLessonInfoOpen] = useState(false);
@@ -306,9 +314,9 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   }, [lessonInfo]);
   
   const displayTitle = React.useMemo(() => {
-    if (!lessonInfo) return '篝火学单机版';
+    if (!lessonInfo) return '篝火学';
     const { currentChapter, currentPart } = lessonInfo.lessonProgress;
-    if (currentChapter <= 0 || currentPart <= 0) return lessonInfo.lessonTitle || '篝火学单机版';
+    if (currentChapter <= 0 || currentPart <= 0) return lessonInfo.lessonTitle || '篝火学';
     const chapter = lessonInfo.learningStructure[currentChapter - 1];
     if (!chapter) return lessonInfo.lessonTitle;
     const part = chapter.child[currentPart - 1];
@@ -328,34 +336,11 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   };
 
   const { particleCount, glowIntensity, brightness } = getEffectSettings(hitCount);
-  const size = 28 + 3 * getEffectSettings(hitCount).stage;
+  const size = 28;
 
   const handleLessonInfoClick = () => {
     setIsLessonInfoOpen(true);
   };
-
-  // 页面缩放控制
-  const [zoomLevel, setZoomLevel] = useState(() => {
-    const saved = localStorage.getItem('page-zoom-level');
-    return saved ? parseFloat(saved) : 1;
-  });
-
-  useEffect(() => {
-    // 移除旧的 zoom 实现，防止样式冲突
-    // @ts-ignore
-    document.body.style.zoom = '';
-    
-    // 使用 rem 缩放方案代替 zoom
-    // 通过调整 html 根元素的 font-size 百分比来缩放所有基于 rem 的元素 (Tailwind 默认使用 rem)
-    // 默认浏览器字体大小通常是 16px (100%)
-    document.documentElement.style.fontSize = `${zoomLevel * 100}%`;
-    
-    localStorage.setItem('page-zoom-level', zoomLevel.toString());
-  }, [zoomLevel]);
-
-  const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 0.1, 1.5));
-  const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 0.1, 0.5));
-  const handleResetZoom = () => setZoomLevel(1);
 
   return (
     <>
@@ -425,14 +410,14 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 
             {/* 缩放控制 - 仅在PC端显示 */}
             <div className="hidden md:flex items-center gap-0.5 mr-2 bg-gray-50/80 rounded-lg p-0.5 border border-gray-200/60">
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-200/80" onClick={handleZoomOut} title="缩小">
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-200/80" onClick={onZoomOut} title="缩小">
                 <ZoomOut className="h-3.5 w-3.5 text-gray-600" />
               </Button>
               <span className="text-[10px] font-medium text-gray-500 w-8 text-center select-none">{Math.round(zoomLevel * 100)}%</span>
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-200/80" onClick={handleZoomIn} title="放大">
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-200/80" onClick={onZoomIn} title="放大">
                 <ZoomIn className="h-3.5 w-3.5 text-gray-600" />
               </Button>
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-200/80" onClick={handleResetZoom} title="重置">
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-200/80" onClick={onResetZoom} title="重置">
                 <RotateCcw className="h-3 w-3 text-gray-400" />
               </Button>
             </div>

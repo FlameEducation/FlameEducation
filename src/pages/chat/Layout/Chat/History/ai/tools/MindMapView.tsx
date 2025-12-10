@@ -1,26 +1,53 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {createPortal} from 'react-dom';
 import {cn} from '@/lib/utils.ts';
 import {useChatHistoryContext} from "@/pages/chat/context/ChatHistoryContext.tsx";
 import {MindMapDisplayComponent} from "@/pages/chat/Layout/RightPannel/MindMapDisplay";
+import {useMindMapContext} from "@/pages/chat/context/MindMapContext.tsx";
+import {useEventBus} from "@/pages/chat/context/EventBusContext.tsx";
 
 interface MindMapViewProps {
   mindMapUuid: string;
+  title?: string;
+  messageId?: string;
 }
 
 export const MindMapView: React.FC<MindMapViewProps> = (
   {
     mindMapUuid,
+    title,
+    messageId
   }) => {
   // 使用 React 的 state 来控制模态框的显示状态，而不是直接操作 DOM
   const [showModal, setShowModal] = React.useState(false);
   const [isLargeScreen, setIsLargeScreen] = React.useState(false);
+  const eventBus = useEventBus();
 
-  const { setActiveMindMapUuid } = useChatHistoryContext();
+  const { setActiveMindMapUuid, setIsRightPanelOpen, chatHistory } = useChatHistoryContext();
+  const { getMindMapState } = useMindMapContext();
+  
+  const mindMapState = getMindMapState(mindMapUuid);
+  const displayTitle = title || mindMapState?.title || '思维导图';
+  const hasOpenedRef = useRef(false);
+
+  // 自动打开右侧面板逻辑
+  useEffect(() => {
+    // 如果是宽屏模式，且是最后一条消息，且未自动打开过
+    if (window.innerWidth >= 768 && !hasOpenedRef.current && mindMapUuid) {
+      const lastMessage = chatHistory[chatHistory.length - 1];
+      const isLastMessage = messageId && lastMessage && lastMessage.uuid === messageId;
+      
+      if (isLastMessage) {
+        setActiveMindMapUuid(mindMapUuid);
+        setIsRightPanelOpen(true);
+        hasOpenedRef.current = true;
+      }
+    }
+  }, [mindMapUuid, messageId, chatHistory, setActiveMindMapUuid, setIsRightPanelOpen]);
 
   // 检查屏幕尺寸
   const checkScreenSize = React.useCallback(() => {
-    setIsLargeScreen(window.innerWidth >= 1024);
+    setIsLargeScreen(window.innerWidth >= 768);
   }, []);
 
   // 处理屏幕尺寸变化
@@ -76,7 +103,7 @@ export const MindMapView: React.FC<MindMapViewProps> = (
           <div className="flex items-center justify-between p-4 border-b">
             <h3 className="text-lg font-medium bg-gradient-to-r from-blue-600 to-blue-400 
                           bg-clip-text text-transparent">
-              思维导图
+              {displayTitle}
             </h3>
             <button
               className={cn(
@@ -102,6 +129,8 @@ export const MindMapView: React.FC<MindMapViewProps> = (
   const handleShowMindMap = () => {
     if (isLargeScreen) {
       setActiveMindMapUuid(mindMapUuid);
+      setIsRightPanelOpen(true);
+      eventBus.emit('showMindMap', { uuid: mindMapUuid });
     } else {
       openModal();
     }
@@ -122,7 +151,7 @@ export const MindMapView: React.FC<MindMapViewProps> = (
                 </svg>
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-medium text-white">思维导图</span>
+                <span className="text-sm font-medium text-white">{displayTitle}</span>
                 <span className="text-xs text-blue-100">点击按钮查看详细内容</span>
               </div>
             </div>

@@ -18,7 +18,7 @@ export const Header: React.FC<HeaderProps> = ({ navItems }) => {
   const navigate = useNavigate();
   
   const currentItem = navItems.find(item => item.path === location.pathname);
-  const title = currentItem ? currentItem.label : 'AI Learn';
+  const title = currentItem ? currentItem.label : '篝火学';
 
   return (
     <header className="h-16 border-b border-gray-200 bg-white sticky top-0 z-10">
@@ -28,7 +28,7 @@ export const Header: React.FC<HeaderProps> = ({ navItems }) => {
           <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold">A</span>
           </div>
-          <span className="text-xl font-bold text-gray-900">AI Learn</span>
+          <span className="text-xl font-bold text-gray-900">篝火学</span>
         </div>
 
         {/* 桌面端标题/面包屑 */}

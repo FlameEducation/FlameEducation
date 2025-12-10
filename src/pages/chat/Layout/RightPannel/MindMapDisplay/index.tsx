@@ -4,6 +4,7 @@ import MindMap from "@/components/mindmap/MindMap";
 import api from "@/api";
 import {Button} from "@/components/ui/button";
 import {RefreshCw} from "lucide-react";
+import {useMindMapContext} from "@/pages/chat/context/MindMapContext.tsx";
 
 interface MindMapContent {
   uuid: string;
@@ -20,14 +21,22 @@ interface MindMapDisplayComponentProps {
 export const MindMapDisplayComponent = ({ uuid }: MindMapDisplayComponentProps = {}) => {
 
   const { activeMindMapUuid, setActiveMindMapUuid } = useChatHistoryContext();
+  const { getMindMapState, loadMindMap } = useMindMapContext();
   
   // 如果传入了uuid，说明是在聊天卡片中显示，否则是在右侧面板显示
   const targetUuid = uuid || activeMindMapUuid;
   const isRightPanelMode = !uuid;
 
-  const [content, setContent] = useState<MindMapContent | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isRegenerating, setIsRegenerating] = useState(false);
+  const mindMapState = targetUuid ? getMindMapState(targetUuid) : undefined;
+  const content = mindMapState ? {
+    uuid: mindMapState.uuid,
+    title: mindMapState.title,
+    content: mindMapState.content || '',
+    over: mindMapState.over,
+    error: mindMapState.error
+  } : null;
+  
+  const isLoading = !mindMapState || mindMapState.isLoading;
   const [isPreview, setIsPreview] = useState(true); // 默认预览模式
 
   // 切换思维导图时重置为预览模式
@@ -37,37 +46,10 @@ export const MindMapDisplayComponent = ({ uuid }: MindMapDisplayComponentProps =
 
   // 获取内容
   useEffect(() => {
-    if (!targetUuid) return;
-
-    let isMounted = true;
-    let pollTimer: NodeJS.Timeout;
-
-    const fetchContent = async () => {
-      try {
-        setIsLoading(true);
-        const res = await api.getMindMapContent(targetUuid) as any;
-        if (isMounted) {
-          setContent(res);
-          
-          // 如果未生成完成，继续轮询
-          if (!res.over && !res.error) {
-            pollTimer = setTimeout(fetchContent, 2000);
-          }
-        }
-      } catch (e) {
-        console.error("获取思维导图失败", e);
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    };
-
-    fetchContent();
-
-    return () => {
-      isMounted = false;
-      if (pollTimer) clearTimeout(pollTimer);
-    };
-  }, [targetUuid, isRegenerating]);
+    if (targetUuid) {
+      loadMindMap(targetUuid);
+    }
+  }, [targetUuid, loadMindMap]);
 
 
   const handleClose = () => {

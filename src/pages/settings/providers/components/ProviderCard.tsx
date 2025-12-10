@@ -13,7 +13,9 @@ interface ProviderListItemProps {
 
 const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   google: 'Google Gemini',
-  doubao: '豆包'
+  doubao: '豆包',
+  openai: 'OpenAI',
+  deepseek: 'DeepSeek'
 };
 
 const PROVIDER_COLORS: Record<string, { bg: string; border: string; badge: string }> = {
@@ -26,6 +28,16 @@ const PROVIDER_COLORS: Record<string, { bg: string; border: string; badge: strin
     bg: 'bg-gradient-to-br from-purple-50 to-pink-100',
     border: 'border-purple-200',
     badge: 'bg-purple-100 text-purple-700'
+  },
+  openai: {
+    bg: 'bg-gradient-to-br from-slate-100 to-slate-200',
+    border: 'border-slate-300',
+    badge: 'bg-slate-200 text-slate-800'
+  },
+  deepseek: {
+    bg: 'bg-gradient-to-br from-indigo-50 to-blue-100',
+    border: 'border-indigo-200',
+    badge: 'bg-indigo-100 text-indigo-700'
   }
 };
 

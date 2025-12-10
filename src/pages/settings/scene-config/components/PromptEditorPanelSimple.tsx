@@ -2,7 +2,7 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { SceneConfig, SceneInfo } from '@/api/sceneConfig';
+import { SceneConfig, SceneInfo } from '@/api/promptConfig';
 import { Copy, Edit, Lock, Trash2 } from 'lucide-react';
 
 interface SimplifiedPromptEditorPanelProps {
@@ -13,6 +13,7 @@ interface SimplifiedPromptEditorPanelProps {
   onDeletePrompt: () => void;
   onCopyPrompt: (content: string) => void;
   loading: boolean;
+  className?: string;
 }
 
 const PromptEditorPanel: React.FC<SimplifiedPromptEditorPanelProps> = ({
@@ -23,10 +24,11 @@ const PromptEditorPanel: React.FC<SimplifiedPromptEditorPanelProps> = ({
   onDeletePrompt,
   onCopyPrompt,
   loading,
+  className,
 }) => {
   if (mode === 'empty' || !selectedPrompt) {
     return (
-      <Card className="flex h-full items-center justify-center border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+      <Card className={`flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 p-8 text-center ${className || 'h-full'}`}>
         <div>
           <p className="text-sm text-slate-600 font-medium">请选择一个提示词查看详情</p>
           <p className="mt-1 text-xs text-slate-500">或点击左侧"添加提示词"按钮创建新的提示词</p>
@@ -36,7 +38,7 @@ const PromptEditorPanel: React.FC<SimplifiedPromptEditorPanelProps> = ({
   }
 
   return (
-    <Card className="flex flex-col border border-slate-200 bg-white h-full">
+    <Card className={`flex flex-col border border-slate-200 bg-white ${className || 'h-full'}`}>
       <div className="flex-1 overflow-y-auto p-6">
         <div className="space-y-6">
         {/* 头部 */}
@@ -59,17 +61,15 @@ const PromptEditorPanel: React.FC<SimplifiedPromptEditorPanelProps> = ({
             <p className="text-sm text-slate-600">场景：{currentScene?.sceneName || '未知场景'}</p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={onStartEdit} disabled={loading}>
+              <Edit className="h-4 w-4 mr-2" />
+              编辑
+            </Button>
             {!selectedPrompt.isSystemTemplate && (
-              <>
-                <Button variant="outline" size="sm" onClick={onStartEdit} disabled={loading}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  编辑
-                </Button>
-                <Button variant="outline" size="sm" onClick={onDeletePrompt} disabled={loading} className="text-red-600 border-red-200 hover:bg-red-50">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  删除
-                </Button>
-              </>
+              <Button variant="outline" size="sm" onClick={onDeletePrompt} disabled={loading} className="text-red-600 border-red-200 hover:bg-red-50">
+                <Trash2 className="h-4 w-4 mr-2" />
+                删除
+              </Button>
             )}
           </div>
         </header>
@@ -86,11 +86,17 @@ const PromptEditorPanel: React.FC<SimplifiedPromptEditorPanelProps> = ({
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1">JSON格式化</p>
-            <p className="text-sm text-slate-900 font-mono">{(selectedPrompt as any).isJsonFormat ? '是' : '否'}</p>
+            <p className="text-sm text-slate-900 font-mono">{selectedPrompt.isJsonFormat ? '是' : '否'}</p>
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1">思考模式</p>
-            <p className="text-sm text-slate-900 font-mono">{(selectedPrompt as any).enableThinking ? '是' : '否'}</p>
+            <p className="text-sm text-slate-900 font-mono">
+              {selectedPrompt.thinkingStatus === 1 ? '开启' : selectedPrompt.thinkingStatus === 0 ? '关闭' : '默认'}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1">消息长度</p>
+            <p className="text-sm text-slate-900 font-mono">{selectedPrompt.messageLength}</p>
           </div>
         </div>
 

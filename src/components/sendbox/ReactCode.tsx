@@ -63,7 +63,7 @@ export const ReactCode: React.FC<ReactCodeProps> = ({
         courseUuid,
         lessonUuid,
         chapterUuid,
-        blackboardUuid
+        blackboardUuid,
       }, '*');
 
       // 5s后允许再次报告错误

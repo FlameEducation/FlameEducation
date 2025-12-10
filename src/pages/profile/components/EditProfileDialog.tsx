@@ -3,6 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -31,6 +38,7 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
   const [formData, setFormData] = useState({
     nickname: '',
     age: '',
+    gender: '',
     avatarFile: null as File | null,
     avatarPreview: ''
   });
@@ -41,6 +49,7 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
       setFormData({
         nickname: currentUser.nickname || '',
         age: currentUser.age ? currentUser.age.toString() : '',
+        gender: currentUser.gender || '',
         avatarFile: null,
         avatarPreview: currentUser.avatarUrl || ''
       });
@@ -67,6 +76,9 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
       formDataToSend.append('nickname', formData.nickname);
       if (formData.age) {
         formDataToSend.append('age', formData.age);
+      }
+      if (formData.gender) {
+        formDataToSend.append('gender', formData.gender);
       }
       if (formData.avatarFile) {
         formDataToSend.append('avatarFile', formData.avatarFile);
@@ -130,9 +142,25 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
                 id="age"
                 type="number"
                 value={formData.age}
-                onChange={e => setFormData(prev => ({ ...prev, age: e.target.value }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, age: e.target.value }))}
                 placeholder="请输入年龄"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="gender">性别</Label>
+              <Select
+                value={formData.gender}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, gender: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="请选择性别" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="male">我是男生</SelectItem>
+                  <SelectItem value="female">我是女生</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

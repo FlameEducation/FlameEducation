@@ -5,6 +5,7 @@ import {useSearchParams} from "react-router-dom";
 import {ChatMessage} from "@/types/ChatMessage.ts";
 import {useEventBus} from '@/pages/chat/context/EventBusContext.tsx';
 import { useChatViewMode, useTTSConfig } from '@/contexts';
+import { useBlackboardContext } from './BlackboardContext';
 
 
 // 创建聊天历史记录上下文
@@ -12,8 +13,9 @@ export const ChatHistoryContext = createContext<{
   isLoading: boolean;
   chatHistory: ChatMessage[];
   clearHistory: () => void;
-  getAllBlackboards: () => string[];
+  getAllBlackboards: () => { uuid: string, title: string }[];
   getAllMindMaps: () => string[];
+  getAllImages: () => { uuid: string, url: string, title: string }[];
   sendMessage: (data: string, type: "AUDIO" | "TEXT") => void;
   sendAudioFile: (file: File) => void;
   sending: boolean;
@@ -25,6 +27,12 @@ export const ChatHistoryContext = createContext<{
   retryMessage: (messageId: string) => void; // 添加 retryMessage
   activeMindMapUuid: string | null;
   setActiveMindMapUuid: (uuid: string | null) => void;
+  activeBlackboardUuid: string | null;
+  setActiveBlackboardUuid: (uuid: string | null) => void;
+  activeImageUuid: string | null;
+  setActiveImageUuid: (uuid: string | null) => void;
+  isRightPanelOpen: boolean;
+  setIsRightPanelOpen: (isOpen: boolean) => void;
   modelConfig: { modelName: string; providerName: string } | null;
   setModelConfig: (config: { modelName: string; providerName: string } | null) => void;
 }>({
@@ -36,6 +44,9 @@ export const ChatHistoryContext = createContext<{
     return []
   },
   getAllMindMaps: () => {
+    return []
+  },
+  getAllImages: () => {
     return []
   },
   sending: false,
@@ -53,6 +64,12 @@ export const ChatHistoryContext = createContext<{
   retryMessage: () => {}, // 添加默认实现
   activeMindMapUuid: null,
   setActiveMindMapUuid: () => {},
+  activeBlackboardUuid: null,
+  setActiveBlackboardUuid: () => {},
+  activeImageUuid: null,
+  setActiveImageUuid: () => {},
+  isRightPanelOpen: false,
+  setIsRightPanelOpen: () => {},
   modelConfig: null,
   setModelConfig: () => {},
 });
@@ -79,7 +96,12 @@ export const ChatHistoryProvider = ({children, onExerciseReceived, isTeacherMode
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [scrollToBottom, setScrollToBottom] = useState<(() => void) | null>(null);
   const [activeMindMapUuid, setActiveMindMapUuid] = useState<string | null>(null);
+  const [activeBlackboardUuid, setActiveBlackboardUuid] = useState<string | null>(null);
+  const [activeImageUuid, setActiveImageUuid] = useState<string | null>(null);
+  const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
   const [modelConfig, setModelConfig] = useState<{ modelName: string; providerName: string } | null>(null);
+
+  const { loadAllBlackboards } = useBlackboardContext();
 
   const [searchParams] = useSearchParams();
   const lessonUuid = searchParams.get('lessonUuid') || '';
@@ -87,22 +109,37 @@ export const ChatHistoryProvider = ({children, onExerciseReceived, isTeacherMode
   // 使用新的Context hooks
   const [chatViewMode] = useChatViewMode();
   const needTts = chatViewMode === 'teacher';
-  const { getTTSConfigForAPI } = useTTSConfig();
-
   useEffect(() => {
   }, [chatHistory]);
 
+  // 监听聊天记录变化，自动加载小黑板数据
+  useEffect(() => {
+    if (chatHistory.length === 0) return;
+    
+    const uuids = chatHistory
+      .filter(item => item.blackboardUuid)
+      .map(item => item.blackboardUuid as string);
+      
+    if (uuids.length > 0) {
+      // 去重
+      const uniqueUuids = Array.from(new Set(uuids));
+      loadAllBlackboards(uniqueUuids);
+    }
+  }, [chatHistory, loadAllBlackboards]);
 
-  const getAllBlackboards = (): string[] => {
+
+  const getAllBlackboards = (): { uuid: string, title: string }[] => {
     if (chatHistory.length === 0) return [];
 
-    const blackboardUuids = new Set<string>();
+    const blackboards: { uuid: string, title: string }[] = [];
+    const seenUuids = new Set<string>();
     chatHistory.forEach(item => {
-      if (item.blackboardUuid) {
-        blackboardUuids.add(item.blackboardUuid);
+      if (item.blackboardUuid && !seenUuids.has(item.blackboardUuid)) {
+        blackboards.push({ uuid: item.blackboardUuid, title: item.blackboardTitle || '未命名小黑板' });
+        seenUuids.add(item.blackboardUuid);
       }
     });
-    return Array.from(blackboardUuids);
+    return blackboards;
   }
 
   const getAllMindMaps = (): string[] => {
@@ -115,6 +152,20 @@ export const ChatHistoryProvider = ({children, onExerciseReceived, isTeacherMode
       }
     });
     return Array.from(mindMapUuids);
+  }
+
+  const getAllImages = (): { uuid: string, url: string, title: string }[] => {
+    if (chatHistory.length === 0) return [];
+
+    const images: { uuid: string, url: string, title: string }[] = [];
+    const seenUuids = new Set<string>();
+    chatHistory.forEach(item => {
+      if (item.imageUuid && !seenUuids.has(item.imageUuid)) {
+        images.push({ uuid: item.imageUuid, url: item.imageUrl || '', title: item.imageTitle || '未命名图片' });
+        seenUuids.add(item.imageUuid);
+      }
+    });
+    return images;
   }
 
   const clearHistory = () => {
@@ -148,26 +199,28 @@ export const ChatHistoryProvider = ({children, onExerciseReceived, isTeacherMode
     });
   }
 
-  const addImageShow = (messageId: string, imageUuid: string) => {
+  const addImageShow = (messageId: string, imageUuid: string, title?: string) => {
     console.log("添加图片显示:", messageId, imageUuid);
     setChatHistory(prev => {
       const index = prev.findIndex(item => item.uuid === messageId);
       if (index !== -1) {
         const updatedMessages = [...prev];
         updatedMessages[index].imageUuid = imageUuid;
+        if (title) updatedMessages[index].imageTitle = title;
         return updatedMessages;
       }
       return prev;
     });
   }
 
-  const addBlackboard = (messageId: string, blackboardUuid: string) => {
+  const addBlackboard = (messageId: string, blackboardUuid: string, title?: string) => {
     console.log("添加黑板:", messageId, blackboardUuid);
     setChatHistory(prev => {
       const index = prev.findIndex(item => item.uuid === messageId);
       if (index !== -1) {
         const updatedMessages = [...prev];
         updatedMessages[index].blackboardUuid = blackboardUuid;
+        if (title) updatedMessages[index].blackboardTitle = title;
         return updatedMessages;
       }
       return prev;
@@ -376,11 +429,11 @@ export const ChatHistoryProvider = ({children, onExerciseReceived, isTeacherMode
       onProgressReceived: (cid: any, pid: any, finished: boolean) => {
         eventBus.emit('progress', { cid, pid, finished });
       },
-      onBlackboardReceived: (blackboardUuid: string) => {
-        addBlackboard(aiMessageUuid, blackboardUuid)
+      onBlackboardReceived: (blackboardUuid: string, title?: string) => {
+        addBlackboard(aiMessageUuid, blackboardUuid, title)
       },
-      onImageReceived: (imageUuid: string) => {
-        addImageShow(aiMessageUuid, imageUuid)
+      onImageReceived: (imageUuid: string, title?: string) => {
+        addImageShow(aiMessageUuid, imageUuid, title)
       },
       onMindMapReceived: (mindMapUuid: string) => {
         addMindMap(aiMessageUuid, mindMapUuid)
@@ -420,7 +473,7 @@ export const ChatHistoryProvider = ({children, onExerciseReceived, isTeacherMode
         
         toast({
           title: "发送失败",
-          description: "点击消息左侧图标可重试",
+          description: error.message,
           variant: "destructive"
         });
       },
@@ -500,11 +553,11 @@ export const ChatHistoryProvider = ({children, onExerciseReceived, isTeacherMode
       onProgressReceived: (cid: any, pid: any, finished: boolean) => {
         eventBus.emit('progress', { cid, pid, finished });
       },
-      onBlackboardReceived: (blackboardUuid: string) => {
-        addBlackboard(aiMessageUuid, blackboardUuid)
+      onBlackboardReceived: (blackboardUuid: string, title?: string) => {
+        addBlackboard(aiMessageUuid, blackboardUuid, title)
       },
-      onImageReceived: (imageUuid: string) => {
-        addImageShow(aiMessageUuid, imageUuid)
+      onImageReceived: (imageUuid: string, title?: string) => {
+        addImageShow(aiMessageUuid, imageUuid, title)
       },
       onMindMapReceived: (mindMapUuid: string) => {
         addMindMap(aiMessageUuid, mindMapUuid)
@@ -616,6 +669,7 @@ export const ChatHistoryProvider = ({children, onExerciseReceived, isTeacherMode
     clearHistory,
     getAllBlackboards,
     getAllMindMaps,
+    getAllImages,
     sendMessage,
     sendAudioFile,
     sending,
@@ -626,6 +680,12 @@ export const ChatHistoryProvider = ({children, onExerciseReceived, isTeacherMode
     updateMessage, // 导出 updateMessage
     activeMindMapUuid,
     setActiveMindMapUuid,
+    activeBlackboardUuid,
+    setActiveBlackboardUuid,
+    activeImageUuid,
+    setActiveImageUuid,
+    isRightPanelOpen,
+    setIsRightPanelOpen,
     retryMessage,
     modelConfig,
     setModelConfig

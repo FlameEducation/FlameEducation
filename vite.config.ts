@@ -17,14 +17,12 @@ export default defineConfig({
     host: '0.0.0.0',
     proxy: {
       '/api': {
-        // target: 'https://learn.gouhuoai.cn',
         target: 'http://127.0.0.1:8080',
         changeOrigin: true,
         // 不重写路径
         // rewrite: (path) => path.replace(/^\/api/, '')
       },
       '/ws': {
-        // target: 'https://learn.gouhuoai.cn',
         target: 'ws://127.0.0.1:8080',
         ws: true,
         changeOrigin: true

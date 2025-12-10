@@ -2,9 +2,13 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAudioPlayStatus } from "@/pages/chat/context/AudioContext.tsx";
 import { useChatHistoryContext } from "@/pages/chat/context/ChatHistoryContext.tsx";
+import { useExerciseContext } from "@/pages/chat/context/ExerciseContext.tsx";
+import { useEventBus } from "@/pages/chat/context/EventBusContext.tsx";
 import { ChatMessage } from "@/types/ChatMessage.ts";
 import RealTeacherAvatar from '@/components/tutor/RealTeacherAvatar';
 import ReactMarkdown from 'react-markdown';
+import remarkBreaks from 'remark-breaks';
+import rehypeRaw from 'rehype-raw';
 // 导入需要的组件
 import { BlackBoardView } from '@/pages/chat/Layout/Chat/History/ai/tools/BlackBoardView.tsx';
 import { MindMapView } from '@/pages/chat/Layout/Chat/History/ai/tools/MindMapView.tsx';
@@ -58,8 +62,17 @@ const GalgameStyleView: React.FC<GalgameStyleViewProps> = () => {
 
   const {
     chatHistory,
-    sending
+    sending,
+    setIsRightPanelOpen,
+    setActiveBlackboardUuid,
+    setActiveMindMapUuid,
+    setActiveImageUuid,
+    retryMessage
   } = useChatHistoryContext();
+
+  const { setRightPanelExerciseId } = useExerciseContext();
+
+  const eventBus = useEventBus();
 
   const {
     isPlaying,
@@ -296,6 +309,47 @@ const GalgameStyleView: React.FC<GalgameStyleViewProps> = () => {
   // 模拟的 sleep 函数
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+  // 自动打开右侧面板逻辑
+  useEffect(() => {
+    if (!currentDisplayMessage) return;
+
+    // 检查是否有需要展示的内容，并触发右侧面板
+    // 使用 setTimeout 确保在渲染更新后执行，避免状态冲突
+    const timer = setTimeout(() => {
+      if (currentDisplayMessage.blackboardUuid) {
+        setIsRightPanelOpen(true);
+        setActiveBlackboardUuid(currentDisplayMessage.blackboardUuid);
+        eventBus.emit('showBlackboard', { uuid: currentDisplayMessage.blackboardUuid });
+      } else if (currentDisplayMessage.mindMapUuid) {
+        setIsRightPanelOpen(true);
+        setActiveMindMapUuid(currentDisplayMessage.mindMapUuid);
+        eventBus.emit('showMindMap', { uuid: currentDisplayMessage.mindMapUuid });
+      } else if (currentDisplayMessage.exerciseUuid) {
+        setIsRightPanelOpen(true);
+        setRightPanelExerciseId(currentDisplayMessage.exerciseUuid);
+        eventBus.emit('showExercise', { uuid: currentDisplayMessage.exerciseUuid });
+      } else if (currentDisplayMessage.imageUuid) {
+        setIsRightPanelOpen(true);
+        setActiveImageUuid(currentDisplayMessage.imageUuid);
+        eventBus.emit('showImage', { uuid: currentDisplayMessage.imageUuid });
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [
+    currentDisplayMessage?.uuid,
+    currentDisplayMessage?.blackboardUuid,
+    currentDisplayMessage?.mindMapUuid,
+    currentDisplayMessage?.exerciseUuid,
+    currentDisplayMessage?.imageUuid,
+    setIsRightPanelOpen,
+    setActiveBlackboardUuid,
+    setActiveMindMapUuid,
+    setActiveImageUuid,
+    setRightPanelExerciseId,
+    eventBus
+  ]);
+
   // 自动播放控制状态
   const [autoPlayEnabled, setAutoPlayEnabled] = useState<boolean>(() => {
     // 从localStorage读取用户设置，默认为true
@@ -518,8 +572,50 @@ const GalgameStyleView: React.FC<GalgameStyleViewProps> = () => {
     isWaitingForNextBlockRef.current = false;
   };
 
+  // 查找发送失败的用户消息
+  const failedUserMessage = useMemo(() => {
+    return [...chatHistory].reverse().find(msg => msg.role === 'user' && msg.status === 'error');
+  }, [chatHistory]);
+
   return (
-    <div ref={containerRef} className="w-full flex items-center justify-center bg-white min-h-full">
+    <div ref={containerRef} className="w-full flex items-center justify-center bg-white min-h-full relative">
+
+      {/* 发送失败提示与重试 */}
+      <AnimatePresence>
+        {failedUserMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: -20, x: '-50%' }}
+            className="absolute top-16 left-1/2 z-50 w-full max-w-sm px-4"
+          >
+            <div className="bg-red-50/90 backdrop-blur-sm border border-red-200 rounded-xl p-3 shadow-lg flex items-center justify-between gap-3">
+              <div className="flex-1 min-w-0 flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs text-red-600 font-medium">消息发送失败</div>
+                  <div className="text-xs text-gray-600 truncate">
+                    {failedUserMessage.contentType === 'AUDIO' ? '[语音消息]' : failedUserMessage.content}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => retryMessage(failedUserMessage.uuid)}
+                className="px-3 py-1.5 bg-white hover:bg-red-50 text-red-600 text-xs font-medium rounded-lg border border-red-100 shadow-sm transition-colors flex items-center gap-1 whitespace-nowrap"
+              >
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                重试
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* 自动播放控制按钮 */}
       <div className="absolute top-4 right-4 z-20">
@@ -651,7 +747,14 @@ const GalgameStyleView: React.FC<GalgameStyleViewProps> = () => {
 
                 {/* 对话文本 */}
                 <div className="text-gray-800 text-base leading-relaxed text-sm">
-                  <ReactMarkdown>
+                  <ReactMarkdown 
+                    remarkPlugins={[remarkBreaks]} 
+                    rehypePlugins={[rehypeRaw]}
+                    components={{
+                      strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+                      em: ({ children }) => <em className="italic">{children}</em>,
+                    }}
+                  >
                     {typewriterText || (displayText && !isTyping ? displayText : '')}
                   </ReactMarkdown>
                   {/*{isTyping && (*/}
@@ -736,11 +839,12 @@ const GalgameStyleView: React.FC<GalgameStyleViewProps> = () => {
                         d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                     </svg>
                   </div>
-                  <span className="text-purple-800 font-medium text-sm">知识小黑板</span>
+                  <span className="text-purple-800 font-medium text-sm">{currentDisplayMessage.blackboardTitle || '知识小黑板'}</span>
                 </div>
                 <BlackBoardView
                   sessionId={paramLessonUuid}
                   blackboardUuid={currentDisplayMessage.blackboardUuid}
+                  title={currentDisplayMessage.blackboardTitle}
                 />
               </motion.div>
             )}
@@ -759,10 +863,11 @@ const GalgameStyleView: React.FC<GalgameStyleViewProps> = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                     </svg>
                   </div>
-                  <span className="text-cyan-800 font-medium text-sm">思维导图</span>
+                  <span className="text-cyan-800 font-medium text-sm">{currentDisplayMessage.mindMapTitle || '思维导图'}</span>
                 </div>
                 <MindMapView
                   mindMapUuid={currentDisplayMessage.mindMapUuid}
+                  title={currentDisplayMessage.mindMapTitle}
                 />
               </motion.div>
             )}
@@ -782,7 +887,7 @@ const GalgameStyleView: React.FC<GalgameStyleViewProps> = () => {
                         d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <span className="text-blue-800 font-medium text-sm">相关图片</span>
+                  <span className="text-blue-800 font-medium text-sm">{currentDisplayMessage.imageTitle || '相关图片'}</span>
                 </div>
                 <div className="rounded-lg overflow-hidden shadow-sm">
                   <ImageView

@@ -9,9 +9,13 @@ import {SettingsDialog} from "@/pages/chat/Layout/Header/SettingsDialog.tsx";
 import ChatComponent from "@/pages/chat/Layout/Chat";
 import RightPanelComponent from "@/pages/chat/Layout/RightPannel";
 
-import {ExerciseModal} from './components/ExerciseModal.tsx';
+import { ExerciseModal } from './components/ExerciseModal.tsx';
 import { EnergyOrbProvider } from './context/EnergyOrbContext.tsx';
 import { useChatViewMode, useSelectedTeacher } from '@/contexts';
+import { useEventBus, EventBusProvider } from './context/EventBusContext.tsx';
+import { ImageProvider } from './context/ImageContext.tsx';
+import { BlackboardProvider } from './context/BlackboardContext.tsx';
+import { MindMapProvider } from './context/MindMapContext.tsx';
 
 interface ChatMainAreaProps {
   chatViewMode: 'teacher' | 'list';
@@ -22,12 +26,30 @@ const ChatMainArea: React.FC<ChatMainAreaProps> = ({
   chatViewMode,
   setChatViewMode,
 }) => {
-  const { getAllBlackboards, getAllMindMaps } = useChatHistoryContext();
+  const { isRightPanelOpen, setIsRightPanelOpen, activeMindMapUuid } = useChatHistoryContext();
   const { showExerciseInRightPanel } = useExerciseContext();
+  const eventBus = useEventBus();
   
-  const hasBlackboards = getAllBlackboards().length > 0;
-  const hasMindMaps = getAllMindMaps().length > 0;
-  const showRightPanel = showExerciseInRightPanel || hasBlackboards || hasMindMaps;
+  // Auto-open logic
+  useEffect(() => {
+    if (showExerciseInRightPanel) setIsRightPanelOpen(true);
+  }, [showExerciseInRightPanel, setIsRightPanelOpen]);
+
+  useEffect(() => {
+    if (activeMindMapUuid) setIsRightPanelOpen(true);
+  }, [activeMindMapUuid, setIsRightPanelOpen]);
+
+  useEffect(() => {
+    const handleShow = () => setIsRightPanelOpen(true);
+    eventBus.on('showBlackboard', handleShow);
+    eventBus.on('showImage', handleShow);
+    return () => {
+      eventBus.off('showBlackboard', handleShow);
+      eventBus.off('showImage', handleShow);
+    };
+  }, [eventBus, setIsRightPanelOpen]);
+
+  const showRightPanel = isRightPanelOpen;
 
   // 新增：分割线拖拽相关状态
   const [leftPanelWidth, setLeftPanelWidth] = useState(() => {
@@ -86,17 +108,54 @@ const ChatMainArea: React.FC<ChatMainAreaProps> = ({
     }
   }, [isDragging, leftPanelWidth, saveWidthToStorage]);
 
+  // 处理触摸开始事件
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    setIsDragging(true);
+  }, []);
+
+  // 处理触摸移动事件
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!isDragging || !containerRef.current) return;
+    
+    // Prevent scrolling while dragging
+    if (e.cancelable) e.preventDefault();
+
+    const container = containerRef.current;
+    const containerRect = container.getBoundingClientRect();
+    const touchX = e.touches[0].clientX - containerRect.left;
+    const containerWidth = containerRect.width;
+    
+    // 计算新的左侧面板宽度百分比
+    const newLeftWidth = (touchX / containerWidth) * 100;
+    
+    // 限制最小和最大宽度（20% - 60%）
+    const clampedWidth = Math.max(20, Math.min(60, newLeftWidth));
+    setLeftPanelWidth(clampedWidth);
+  }, [isDragging]);
+
+  // 处理触摸结束事件
+  const handleTouchEnd = useCallback(() => {
+    if (isDragging) {
+      setIsDragging(false);
+      saveWidthToStorage(leftPanelWidth);
+    }
+  }, [isDragging, leftPanelWidth, saveWidthToStorage]);
+
   // 添加全局事件监听器
   useEffect(() => {
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd);
       // 防止文本选择
       document.body.style.userSelect = 'none';
       document.body.style.cursor = 'col-resize';
     } else {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
     }
@@ -104,10 +163,12 @@ const ChatMainArea: React.FC<ChatMainAreaProps> = ({
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
     };
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
   return (
         <main className="flex flex-1 overflow-hidden" ref={containerRef}>
@@ -136,6 +197,7 @@ const ChatMainArea: React.FC<ChatMainAreaProps> = ({
                   isDragging ? 'bg-blue-100' : ''
                 }`}
                 onMouseDown={handleMouseDown}
+                onTouchStart={handleTouchStart}
               />
               
               {/* 分割线中间的拖拽指示器 - 三个竖线 */}
@@ -169,6 +231,22 @@ const ChatMainArea: React.FC<ChatMainAreaProps> = ({
   );
 }
 
+const ChatHistoryWrapper: React.FC<{children: React.ReactNode}> = ({children}) => {
+  const [chatViewMode] = useChatViewMode();
+  const [selectedTeacherUuid] = useSelectedTeacher();
+  const { addExerciseFromSSE } = useExerciseContext();
+
+  return (
+    <ChatHistoryProvider
+      isTeacherMode={chatViewMode === 'teacher'}
+      selectedteacherUuid={selectedTeacherUuid || 'teacher-3'}
+      onExerciseReceived={addExerciseFromSSE}
+    >
+      {children}
+    </ChatHistoryProvider>
+  );
+};
+
 // 内部组件，使用ExerciseContext
 const ChatContent: React.FC = () => {
   
@@ -179,6 +257,29 @@ const ChatContent: React.FC = () => {
   const [chatViewMode, setChatViewMode] = useChatViewMode();
   const [selectedTeacherUuid, setSelectedTeacherUuid] = useSelectedTeacher();
 
+  // 页面缩放控制
+  const [zoomLevel, setZoomLevel] = useState(() => {
+    const saved = localStorage.getItem('page-zoom-level');
+    return saved ? parseFloat(saved) : 1;
+  });
+
+  useEffect(() => {
+    // 移除旧的 zoom 实现，防止样式冲突
+    // @ts-ignore
+    document.body.style.zoom = '';
+    
+    // 使用 rem 缩放方案代替 zoom
+    // 通过调整 html 根元素的 font-size 百分比来缩放所有基于 rem 的元素 (Tailwind 默认使用 rem)
+    // 默认浏览器字体大小通常是 16px (100%)
+    document.documentElement.style.fontSize = `${zoomLevel * 100}%`;
+    
+    localStorage.setItem('page-zoom-level', zoomLevel.toString());
+  }, [zoomLevel]);
+
+  const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 0.1, 1.5));
+  const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 0.1, 0.5));
+  const handleResetZoom = () => setZoomLevel(1);
+
   // 确保有默认教师
   useEffect(() => {
     if (!selectedTeacherUuid) {
@@ -187,11 +288,6 @@ const ChatContent: React.FC = () => {
   }, [selectedTeacherUuid, setSelectedTeacherUuid]);
 
   return (
-    <ExerciseProvider>
-      <ChatHistoryProvider
-        isTeacherMode={chatViewMode === 'teacher'}
-        selectedteacherUuid={selectedTeacherUuid || 'teacher-3'}
-      >
         <div className="flex h-screen-stable">
           <div className="flex-1 overflow-hidden flex flex-col">
 
@@ -199,6 +295,10 @@ const ChatContent: React.FC = () => {
         <ChatHeader
           onOpenSettings={() => setShowSettings(true)}
           onOpenLessonInfo={() => setShowLessonInfo(true)}
+          zoomLevel={zoomLevel}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onResetZoom={handleResetZoom}
         />
 
         <ChatMainArea 
@@ -216,6 +316,10 @@ const ChatContent: React.FC = () => {
         <SettingsDialog
           open={showSettings}
           onOpenChange={setShowSettings}
+          zoomLevel={zoomLevel}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onResetZoom={handleResetZoom}
         />
 
         {/* 移动设备练习模态框 - 内部会自动判断是否为移动设备 */}
@@ -224,8 +328,6 @@ const ChatContent: React.FC = () => {
         </div>
 
       </div>
-      </ChatHistoryProvider>
-    </ExerciseProvider>
   );
 };
 
@@ -234,13 +336,23 @@ const ChatContent: React.FC = () => {
 export const ChatIndexPage: React.FC = () => {
   return (
     <EnergyOrbProvider>
-      <ExerciseProvider>
-        <ClassStatusContextProvider>
-          <AudioPlayStatusProvider>
-            <ChatContent/>
-          </AudioPlayStatusProvider>
-        </ClassStatusContextProvider>
-      </ExerciseProvider>
+      <EventBusProvider>
+        <ExerciseProvider>
+          <ImageProvider>
+            <BlackboardProvider>
+              <MindMapProvider>
+                  <ClassStatusContextProvider>
+                    <AudioPlayStatusProvider>
+                      <ChatHistoryWrapper>
+                        <ChatContent/>
+                      </ChatHistoryWrapper>
+                    </AudioPlayStatusProvider>
+                  </ClassStatusContextProvider>
+              </MindMapProvider>
+            </BlackboardProvider>
+          </ImageProvider>
+        </ExerciseProvider>
+      </EventBusProvider>
     </EnergyOrbProvider>
   );
 };

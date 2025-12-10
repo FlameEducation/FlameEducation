@@ -40,7 +40,7 @@ const TabLayout: React.FC = () => {
   const isAITutorPage = location.pathname === '/tutor';
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex bg-gray-50 overflow-hidden h-screen-stable">
       {/* 桌面端侧边栏 */}
       <Sidebar navItems={navItems} />
 

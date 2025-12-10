@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Loader2, Lightbulb } from 'lucide-react';
 import { AiProviderConfig } from '@/api/ai-provider';
-import { CreateScenePromptRequest, UpdateScenePromptRequest } from '@/api/sceneConfig';
+import { CreateScenePromptRequest, UpdateScenePromptRequest } from '@/api/promptConfig';
 import { PLACEHOLDERS, PromptPlaceholderCategory } from '../placeholders';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -105,18 +105,19 @@ const PromptDialog: React.FC<PromptDialogProps> = ({
             />
           </div>
 
+          {!(data as any).isSystemTemplate && (
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="promptContent" className="text-sm">提示词内容 <span className="text-red-500">*</span></Label>
               <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 text-xs"
-                onClick={() => setShowPlaceholders(!showPlaceholders)}
-              >
-                <Lightbulb className="mr-1 h-3 w-3" />
-                {showPlaceholders ? '隐藏' : '显示'}占位符
-              </Button>
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => setShowPlaceholders(!showPlaceholders)}
+                >
+                  <Lightbulb className="mr-1 h-3 w-3" />
+                  {showPlaceholders ? '隐藏' : '显示'}占位符
+                </Button>
             </div>
             
             {showPlaceholders && (
@@ -151,15 +152,16 @@ const PromptDialog: React.FC<PromptDialogProps> = ({
               </div>
             )}
 
-            <Textarea
-              ref={textareaRef}
-              id="promptContent"
-              value={data.promptContent || ''}
-              onChange={e => onDataChange({ promptContent: e.target.value })}
-              placeholder="输入提示词内容，可以使用上方的占位符"
-              className="min-h-[200px] font-mono text-sm"
-            />
+              <Textarea
+                ref={textareaRef}
+                id="promptContent"
+                value={data.promptContent || ''}
+                onChange={e => onDataChange({ promptContent: e.target.value })}
+                placeholder="输入提示词内容，可以使用上方的占位符"
+                className="min-h-[200px] font-mono text-sm"
+              />
           </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
@@ -227,16 +229,35 @@ const PromptDialog: React.FC<PromptDialogProps> = ({
             />
           </div>
 
-          <div className="flex items-center justify-between rounded-md border border-slate-200 p-3">
-            <div className="space-y-0.5">
-              <Label htmlFor="enableThinking" className="text-sm">开启思考</Label>
-              <p className="text-xs text-slate-500">启用模型的思考能力（如果支持）</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-2">
+              <Label htmlFor="thinkingStatus" className="text-sm">思考模式</Label>
+              <Select
+                value={String((data as any).thinkingStatus ?? -1)}
+                onValueChange={value => onDataChange({ thinkingStatus: parseInt(value) } as any)}
+              >
+                <SelectTrigger id="thinkingStatus" className="h-9">
+                  <SelectValue placeholder="选择思考模式" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="-1">默认</SelectItem>
+                  <SelectItem value="0">关闭</SelectItem>
+                  <SelectItem value="1">开启</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Switch
-              id="enableThinking"
-              checked={(data as any).enableThinking ?? false}
-              onCheckedChange={checked => onDataChange({ enableThinking: checked } as any)}
-            />
+
+            <div className="grid gap-2">
+              <Label htmlFor="messageLength" className="text-sm">消息长度限制</Label>
+              <Input
+                id="messageLength"
+                type="number"
+                value={(data as any).messageLength ?? 10}
+                onChange={e => onDataChange({ messageLength: parseInt(e.target.value) } as any)}
+                placeholder="例如: 10"
+                className="h-9 text-sm"
+              />
+            </div>
           </div>
 
           {'isEnabled' in data && (

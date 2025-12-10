@@ -66,7 +66,7 @@ export default function InitPage() {
         <CardHeader>
           <CardTitle>系统初始化</CardTitle>
           <CardDescription>
-            欢迎使用 AI Learn 系统。检测到这是首次运行，请设置管理员账号。
+            欢迎使用 篝火学 系统。检测到这是首次运行，请设置管理员账号。
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -75,7 +75,7 @@ export default function InitPage() {
               <Label htmlFor="username">用户名 / 邮箱</Label>
               <Input
                 id="username"
-                placeholder="admin"
+                placeholder="请输入邮箱地址"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -87,6 +87,7 @@ export default function InitPage() {
                 id="password"
                 type="password"
                 value={password}
+                placeholder='请输入密码'
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
@@ -97,6 +98,7 @@ export default function InitPage() {
                 id="confirmPassword"
                 type="password"
                 value={confirmPassword}
+                placeholder='请再次输入密码'
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
               />

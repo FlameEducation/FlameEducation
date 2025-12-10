@@ -20,7 +20,6 @@ const CodePreviewPage: React.FC = () => {
       }
     };
     window.addEventListener('message', handleMessage);
-    console.log('Sending IFRAME_READY message');
     window.parent.postMessage({type: 'IFRAME_READY'}, '*');
     return () => {
       window.removeEventListener('message', handleMessage);
@@ -40,7 +39,7 @@ const CodePreviewPage: React.FC = () => {
   }
 
   return (
-    <div className="h-screen-dynamic overflow-auto bg-transparent">
+    <div className="h-screen-dynamic overflow-auto bg-transparent [&::-webkit-scrollbar]:hidden">
       <ReactCode
         code={code}
         hideEditor={true}

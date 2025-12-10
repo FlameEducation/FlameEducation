@@ -14,6 +14,7 @@ export interface GlobalSettings {
   inputMode: 'phone' | 'walkie-talkie' | 'text';
   selectedTeacherUuid: string | null;
   voiceSpeed: 'fast' | 'medium' | 'slow';
+  blackboardZoomLevel: number;
 }
 
 // ==================== 默认值 ====================
@@ -25,6 +26,7 @@ const DEFAULT_SETTINGS: GlobalSettings = {
   inputMode: 'phone',
   selectedTeacherUuid: null,
   voiceSpeed: 'medium',
+  blackboardZoomLevel: 1,
 };
 
 // ==================== Context定义 ====================
@@ -47,6 +49,9 @@ interface GlobalSettingsContextType {
   
   voiceSpeed: 'fast' | 'medium' | 'slow';
   setVoiceSpeed: (value: 'fast' | 'medium' | 'slow') => void;
+
+  blackboardZoomLevel: number;
+  setBlackboardZoomLevel: (value: number) => void;
   
   // 工具方法
   getAllSettings: () => GlobalSettings;
@@ -125,6 +130,11 @@ export const GlobalSettingsProvider: React.FC<GlobalSettingsProviderProps> = ({ 
     setSettings(prev => ({ ...prev, voiceSpeed: value }));
   }, []);
 
+  // 黑板缩放
+  const setBlackboardZoomLevel = useCallback((value: number) => {
+    setSettings(prev => ({ ...prev, blackboardZoomLevel: value }));
+  }, []);
+
   // ==================== 工具方法 ====================
 
   // 获取所有设置
@@ -170,6 +180,9 @@ export const GlobalSettingsProvider: React.FC<GlobalSettingsProviderProps> = ({ 
     
     voiceSpeed: settings.voiceSpeed || 'medium',
     setVoiceSpeed,
+
+    blackboardZoomLevel: settings.blackboardZoomLevel || 1,
+    setBlackboardZoomLevel,
     
     // 工具方法
     getAllSettings,
@@ -220,6 +233,11 @@ export const useSelectedTeacher = () => {
 export const useVoiceSpeed = () => {
   const { voiceSpeed, setVoiceSpeed } = useGlobalSettings();
   return [voiceSpeed, setVoiceSpeed] as const;
+};
+
+export const useBlackboardZoom = () => {
+  const { blackboardZoomLevel, setBlackboardZoomLevel } = useGlobalSettings();
+  return [blackboardZoomLevel, setBlackboardZoomLevel] as const;
 };
 
 export const useTTSConfig = () => {

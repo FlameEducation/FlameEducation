@@ -59,7 +59,7 @@ export const StandardCourseCard: React.FC<StandardCourseCardProps> = ({ course, 
       onClick={() => navigate(`/courses/${course.uuid}`)}
     >
       {/* 封面区域 - 调整为更窄更高的比例，这里使用 aspect-[4/3] */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+      <div className="relative aspect-[16/9] overflow-hidden bg-gray-100">
         {course.coverImageUrl ? (
           <img
             src={course.coverImageUrl}
@@ -121,17 +121,17 @@ export const StandardCourseCard: React.FC<StandardCourseCardProps> = ({ course, 
             ))}
           </div>
 
-          {/* 成就提示 */}
-          {nextAchievement ? (
-            <div className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 p-2 rounded-md">
-              <Trophy className="w-3.5 h-3.5 shrink-0" />
-              <span className="line-clamp-1">
-                再完成{nextAchievement.remainingLessons}个课时，获得"{nextAchievement.title}"
-              </span>
-            </div>
-          ) : (
-             <div className="h-[34px]"></div> // 占位，保持卡片高度一致
-          )}
+          {/*/!* 成就提示 *!/*/}
+          {/*{nextAchievement ? (*/}
+          {/*  <div className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 p-2 rounded-md">*/}
+          {/*    <Trophy className="w-3.5 h-3.5 shrink-0" />*/}
+          {/*    <span className="line-clamp-1">*/}
+          {/*      再完成{nextAchievement.remainingLessons}个课时，获得"{nextAchievement.title}"*/}
+          {/*    </span>*/}
+          {/*  </div>*/}
+          {/*) : (*/}
+          {/*   <div className="h-[34px]"></div> // 占位，保持卡片高度一致*/}
+          {/*)}*/}
         </div>
       </div>
     </Card>

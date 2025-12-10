@@ -4,51 +4,195 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import SettingsLayout from '../components/SettingsLayout';
 import {
   ArrowLeft,
-  Loader,
-  CheckCircle,
+  Loader2,
+  CheckCircle2,
   AlertCircle,
-  Zap,
-  GraduationCap,
-  Eye
+  Sparkles,
+  BookOpen,
+  Settings,
+  Play,
+  Edit3,
+  Clock,
+  BarChart3,
+  Layers,
+  ChevronDown,
+  ChevronUp,
+  Lightbulb,
+  ArrowLeftCircle,
+  ArrowRightCircle
 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import * as autoCourseApi from '@/api/autoCourse';
+import { listAiProviders, AiProviderConfig } from '@/api/ai-provider';
 import { CourseGenerationStatusVo } from '@/types/course-generation';
-import { AutoCourseSessionVo } from '@/types/course';
+import { AutoCourseSessionVo, LessonDraft } from '@/types/course';
 import { cn } from '@/lib/utils';
+import { CourseGenerationTasks } from './CourseGenerationTasks';
 
 type GenerationPhase = 'form' | 'generating-structure' | 'preview' | 'submitting' | 'success' | 'error';
+
+const LessonItem = ({ lesson }: { lesson: LessonDraft }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="bg-slate-50 rounded-lg border border-slate-100 overflow-hidden transition-all hover:border-violet-200">
+      <div 
+        className="flex items-center gap-3 p-3 cursor-pointer hover:bg-violet-50/50 transition-colors"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <div className="w-6 h-6 rounded-full bg-white border-2 border-violet-200 flex items-center justify-center text-xs font-bold text-slate-600 flex-shrink-0">
+          {lesson.sequence}
+        </div>
+        <span className="flex-1 text-sm font-medium text-slate-700">{lesson.title}</span>
+        <span className="text-xs text-slate-500 flex items-center gap-1 mr-2">
+          <Clock className="w-3 h-3" />
+          {Math.round(lesson.durationSeconds / 60)}分钟
+        </span>
+        {expanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+      </div>
+      
+      {expanded && (
+        <div className="px-4 pb-4 pt-0 space-y-3 text-sm border-t border-slate-100 bg-white/50">
+            <div className="pt-3 text-slate-600 text-xs leading-relaxed">
+                {lesson.description}
+            </div>
+            
+            <div className="grid gap-3 pt-2">
+                {/* 本节知识点 */}
+                {lesson.currentLessonKnowledgePoints && lesson.currentLessonKnowledgePoints.length > 0 && (
+                    <div className="bg-violet-50 rounded-md p-3 border border-violet-100">
+                        <div className="flex items-center gap-2 text-violet-700 font-medium mb-2 text-xs">
+                            <Lightbulb className="w-3.5 h-3.5" />
+                            本节核心知识点
+                        </div>
+                        <ul className="space-y-1">
+                            {lesson.currentLessonKnowledgePoints.map((point, idx) => (
+                                <li key={idx} className="text-xs text-slate-600 flex items-start gap-1.5">
+                                    <span className="w-1 h-1 rounded-full bg-violet-400 mt-1.5 flex-shrink-0" />
+                                    {point}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3">
+                    {/* 前序知识点 */}
+                    {lesson.previousKnowledgePoints && lesson.previousKnowledgePoints.length > 0 && (
+                        <div className="bg-slate-50 rounded-md p-3 border border-slate-100">
+                            <div className="flex items-center gap-2 text-slate-600 font-medium mb-2 text-xs">
+                                <ArrowLeftCircle className="w-3.5 h-3.5" />
+                                已学知识点关联
+                            </div>
+                            <ul className="space-y-1">
+                                {lesson.previousKnowledgePoints.map((point, idx) => (
+                                    <li key={idx} className="text-xs text-slate-500 flex items-start gap-1.5">
+                                        <span className="w-1 h-1 rounded-full bg-slate-300 mt-1.5 flex-shrink-0" />
+                                        {point}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {/* 后续知识点 */}
+                    {lesson.futureKnowledgePoints && lesson.futureKnowledgePoints.length > 0 && (
+                        <div className="bg-slate-50 rounded-md p-3 border border-slate-100">
+                            <div className="flex items-center gap-2 text-slate-600 font-medium mb-2 text-xs">
+                                <ArrowRightCircle className="w-3.5 h-3.5" />
+                                后续知识点铺垫
+                            </div>
+                            <ul className="space-y-1">
+                                {lesson.futureKnowledgePoints.map((point, idx) => (
+                                    <li key={idx} className="text-xs text-slate-500 flex items-start gap-1.5">
+                                        <span className="w-1 h-1 rounded-full bg-slate-300 mt-1.5 flex-shrink-0" />
+                                        {point}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const CreateCoursePage: React.FC = () => {
   const navigate = useNavigate();
   const [phase, setPhase] = useState<GenerationPhase>('form');
 
-  // 表单字段
   const [topic, setTopic] = useState('');
-  const [difficulty, setDifficulty] = useState('medium');
-  const [chapterCount, setChapterCount] = useState(3);
+  const [targetAudience, setTargetAudience] = useState('youth');
+  const [complexity, setComplexity] = useState('moderate');
+  const [chapterCount, setChapterCount] = useState(6);
 
-  // 生成状态
+  const [providerConfigs, setProviderConfigs] = useState<AiProviderConfig[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<string>('');
+  const [selectedModel, setSelectedModel] = useState<string>('');
+
   const [sessionData, setSessionData] = useState<AutoCourseSessionVo | null>(null);
   const [status, setStatus] = useState<CourseGenerationStatusVo | null>(null);
   const [error, setError] = useState('');
 
-  // 编辑功能
   const [isEditing, setIsEditing] = useState(false);
   const [editInstruction, setEditInstruction] = useState('');
   const [isEditingCourse, setIsEditingCourse] = useState(false);
+  const [showTasks, setShowTasks] = useState(false);
 
-  // 轮询
+  // Advanced settings for generation
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [enableParallel, setEnableParallel] = useState(false);
+  const [parallelThreads, setParallelThreads] = useState(4);
+
   const pollingIntervalRef = useRef<NodeJS.Timeout>();
   const maxRetriesRef = useRef(0);
 
-  // 开始课程生成
+  useEffect(() => {
+    const loadProviders = async () => {
+      try {
+        const data = await listAiProviders();
+        setProviderConfigs(data);
+        if (data.length > 0) {
+          setSelectedProvider(data[0].providerName);
+          if (data[0].models.length > 0) {
+            setSelectedModel(data[0].models[0]);
+          }
+        }
+      } catch (error) {
+        console.error('加载服务商失败:', error);
+      }
+    };
+    loadProviders();
+  }, []);
+
+  useEffect(() => {
+    if (selectedProvider) {
+      const provider = providerConfigs.find(p => p.providerName === selectedProvider);
+      if (provider && provider.models.length > 0) {
+        setSelectedModel(provider.models[0]);
+      } else {
+        setSelectedModel('');
+      }
+    }
+  }, [selectedProvider, providerConfigs]);
+
   const handleStartGeneration = async () => {
     if (!topic.trim()) {
       setError('请输入课程主题');
+      return;
+    }
+    if (!selectedProvider || !selectedModel) {
+      setError('请选择AI服务商和模型');
       return;
     }
 
@@ -56,15 +200,16 @@ const CreateCoursePage: React.FC = () => {
       setError('');
       setPhase('generating-structure');
 
-      // 调用后端开始生成
       const response = await autoCourseApi.startCourseGeneration({
         topic: topic.trim(),
-        difficulty,
+        targetAudience,
+        complexity,
         language: 'zh',
         suggestedChapterCount: chapterCount,
+        aiServiceProvider: selectedProvider,
+        aiModelName: selectedModel,
       });
 
-      // 生成完成，显示预览
       setSessionData(response);
       setPhase('preview');
     } catch (err) {
@@ -74,7 +219,6 @@ const CreateCoursePage: React.FC = () => {
     }
   };
 
-  // 提交课程生成
   const handleSubmitCourse = async () => {
     if (!sessionData) return;
 
@@ -83,10 +227,7 @@ const CreateCoursePage: React.FC = () => {
       setPhase('submitting');
       maxRetriesRef.current = 0;
 
-      // 调用提交接口
-      await autoCourseApi.submitCourse(sessionData.sessionUuid);
-
-      // 开始轮询状态
+      await autoCourseApi.submitCourse(sessionData.sessionUuid, enableParallel, parallelThreads);
       startPolling(sessionData.sessionUuid);
     } catch (err) {
       console.error('Failed to submit course:', err);
@@ -95,7 +236,6 @@ const CreateCoursePage: React.FC = () => {
     }
   };
 
-  // 编辑课程结构
   const handleEditCourse = async () => {
     if (!sessionData || !editInstruction.trim()) {
       setError('请输入修改指令');
@@ -106,10 +246,8 @@ const CreateCoursePage: React.FC = () => {
       setError('');
       setIsEditingCourse(true);
 
-      // 调用编辑接口
       const response = await autoCourseApi.editCourse(sessionData.sessionUuid, editInstruction.trim());
 
-      // 更新课程数据
       setSessionData(response);
       setEditInstruction('');
       setIsEditing(false);
@@ -121,14 +259,12 @@ const CreateCoursePage: React.FC = () => {
     }
   };
 
-  // 开始轮询
   const startPolling = (uuid: string) => {
     const poll = async () => {
       try {
         const statusData = await autoCourseApi.getCourseGenerationStatus(uuid);
         setStatus(statusData);
 
-        // 检查生成状态
         if (statusData.status === 'COMPLETED') {
           clearInterval(pollingIntervalRef.current);
           setPhase('success');
@@ -137,11 +273,10 @@ const CreateCoursePage: React.FC = () => {
           setError(statusData.errorMessage || '课程生成失败');
           setPhase('error');
         }
-        // 继续轮询 GENERATING 状态
       } catch (err) {
         console.error('Failed to fetch generation status:', err);
         maxRetriesRef.current++;
-        if (maxRetriesRef.current > 30) { // 30次失败后停止轮询
+        if (maxRetriesRef.current > 30) {
           clearInterval(pollingIntervalRef.current);
           setError('获取生成状态失败，请刷新重试');
           setPhase('error');
@@ -149,14 +284,10 @@ const CreateCoursePage: React.FC = () => {
       }
     };
 
-    // 立即执行一次
     poll();
-
-    // 每 2 秒轮询一次
     pollingIntervalRef.current = setInterval(poll, 2000);
   };
 
-  // 清理轮询
   useEffect(() => {
     return () => {
       if (pollingIntervalRef.current) {
@@ -166,630 +297,543 @@ const CreateCoursePage: React.FC = () => {
   }, []);
 
   return (
+    <SettingsLayout title="创建课程" description="AI 智能生成课程">
+      <div className="h-full">
+        {/* Form Phase - Wizard Style */}
+        {phase === 'form' && (
+          <div className="max-w-4xl mx-auto space-y-8">
+            {/* Header */}
+            <div className="text-center space-y-3 py-8 relative">
+              <div className="absolute right-0 top-0">
+                <Button variant="outline" onClick={() => setShowTasks(true)}>
+                  <Layers className="w-4 h-4 mr-2" />
+                  查看生成任务
+                </Button>
+              </div>
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 mb-4 shadow-lg">
+                <Sparkles className="w-8 h-8 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold text-slate-900">AI 课程生成器</h1>
+              <p className="text-slate-600 text-lg max-w-2xl mx-auto">
+                只需简单几步，AI 将为您量身定制完整的课程体系
+              </p>
+            </div>
 
-    <SettingsLayout
-      title="创建课程"
-      description="创建新的 AI 课程"
-    >
-
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50">
-        {/* 主容器 */}
-        <div className="container mx-auto px-4 py-6 md:py-8 max-w-2xl">
-          {phase === 'form' && (
-            <Card className="p-6 md:p-8 space-y-6 max-w-3xl mx-auto">
-              {/* 表单标题 */}
-              <div className="text-center">
-                <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <span className="text-2xl md:text-3xl">✨</span>
-                </div>
-                <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-2">AI 智能生成课程</h2>
-                <p className="text-sm md:text-base text-slate-600">只需几步，让 AI 为您创建专业的课程结构</p>
+            {/* Main Form - Vertical Layout */}
+            <div className="space-y-8">
+              
+              {/* Step 1: Topic */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                  <span className="flex items-center justify-center w-7 h-7 rounded-full bg-violet-100 text-violet-700 text-sm font-bold">1</span>
+                  定义课程主题
+                </h2>
+                <Card className="border-2 border-slate-200 hover:border-violet-300 transition-colors">
+                  <div className="p-6 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
+                        <BookOpen className="w-5 h-5 text-violet-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-slate-900">课程主题</h3>
+                        <p className="text-sm text-slate-500">描述您要创建的课程内容</p>
+                      </div>
+                    </div>
+                    <Textarea
+                      placeholder="例如：全面的 Python 编程课程，涵盖从基础语法到高级特性，包括数据结构、算法、Web 开发和机器学习入门..."
+                      value={topic}
+                      onChange={(e) => setTopic(e.target.value)}
+                      className="min-h-[120px] text-base resize-none border-2 focus:border-violet-500"
+                    />
+                  </div>
+                </Card>
               </div>
 
-              {/* 表单字段 */}
-              <div className="space-y-6">
-                {/* 课程主题 */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                    <span>📚</span>
-                    课程主题 *
-                  </label>
-                  <Input
-                    placeholder="例如：Python 从入门到精通、前端开发实战、数据结构与算法..."
-                    value={topic}
-                    onChange={(e) => setTopic(e.target.value)}
-                    className="text-base h-12 border-2 focus:border-blue-500"
-                  />
-                  <p className="text-xs text-slate-500 mt-2 flex items-center gap-1">
-                    <span>💡</span>
-                    描述越详细，生成的课程越符合您的需求
-                  </p>
-                </div>
+              {/* Step 2: Audience & Complexity */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                  <span className="flex items-center justify-center w-7 h-7 rounded-full bg-violet-100 text-violet-700 text-sm font-bold">2</span>
+                  设定受众与难度
+                </h2>
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Target Audience */}
+                  <Card className="border-2 border-slate-200">
+                    <div className="p-6 space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                          <BarChart3 className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-slate-900">面向群体</h3>
+                          <p className="text-sm text-slate-500">选择目标受众年龄段</p>
+                        </div>
+                      </div>
+                      <Select value={targetAudience} onValueChange={setTargetAudience}>
+                        <SelectTrigger className="w-full h-11 border-2">
+                          <SelectValue placeholder="选择目标受众" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[
+                            { value: 'preschool', label: '学前儿童', age: '3-6岁' },
+                            { value: 'children', label: '少年', age: '7-12岁' },
+                            { value: 'teenager', label: '青少年', age: '13-17岁' },
+                            { value: 'youth', label: '青年', age: '18-30岁' },
+                            { value: 'adult', label: '成年', age: '31-50岁' },
+                            { value: 'middleAged', label: '中年', age: '51-65岁' },
+                            { value: 'elderly', label: '老年', age: '65岁以上' }
+                          ].map(({ value, label, age }) => (
+                            <SelectItem key={value} value={value}>
+                              <span className="font-medium">{label}</span>
+                              <span className="ml-2 text-slate-500 text-xs">({age})</span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </Card>
 
-                {/* 难度等级 */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                    <span>🎯</span>
-                    难度等级
-                  </label>
-                  <div className="grid grid-cols-3 gap-2 md:gap-3">
-                    {[
-                      { value: 'easy', label: '初级', icon: '🌱', desc: '零基础入门' },
-                      { value: 'medium', label: '中级', icon: '🌿', desc: '有一定基础' },
-                      { value: 'hard', label: '高级', icon: '🌳', desc: '深入进阶' }
-                    ].map(({ value, label, icon, desc }) => (
-                      <button
-                        key={value}
-                        onClick={() => setDifficulty(value)}
-                        className={cn(
-                          'px-4 py-4 rounded-xl font-medium transition-all border-2 flex flex-col items-center gap-2',
-                          difficulty === value
-                            ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white border-blue-600 shadow-lg scale-105'
-                            : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:shadow-md'
-                        )}
-                      >
-                        <span className="text-2xl">{icon}</span>
-                        <span className="font-bold">{label}</span>
-                        <span className="text-xs opacity-80">{desc}</span>
-                      </button>
-                    ))}
-                  </div>
+                  {/* Complexity */}
+                  <Card className="border-2 border-slate-200">
+                    <div className="p-6 space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                          <Layers className="w-5 h-5 text-amber-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-slate-900">复杂程度</h3>
+                          <p className="text-sm text-slate-500">选择课程深度</p>
+                        </div>
+                      </div>
+                      <Select value={complexity} onValueChange={setComplexity}>
+                        <SelectTrigger className="w-full h-11 border-2">
+                          <SelectValue placeholder="选择课程深度" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[
+                            { value: 'shallow', label: '浅显', desc: '基础概念，轻松入门' },
+                            { value: 'moderate', label: '适中', desc: '循序渐进，系统学习' },
+                            { value: 'comprehensive', label: '全面', desc: '完整体系，深入理解' },
+                            { value: 'deep', label: '深度', desc: '专业深入，理论实践' }
+                          ].map(({ value, label, desc }) => (
+                            <SelectItem key={value} value={value}>
+                              <span className="font-medium">{label}</span>
+                              <span className="ml-2 text-slate-500 text-xs">- {desc}</span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </Card>
                 </div>
+              </div>
 
-                {/* 建议章节数 */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                    <span>📖</span>
-                    建议章节数
-                  </label>
-                  <div className="bg-slate-50 rounded-xl p-4 md:p-6 border-2 border-slate-200">
-                    <div className="flex items-center gap-3 md:gap-4 mb-4">
+              {/* Step 3: Chapter Count */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                  <span className="flex items-center justify-center w-7 h-7 rounded-full bg-violet-100 text-violet-700 text-sm font-bold">3</span>
+                  调整课程规模
+                </h2>
+                <Card className="border-2 border-slate-200">
+                  <div className="p-6 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                        <BookOpen className="w-5 h-5 text-indigo-600" />
+                      </div>
+                      <div className="flex-1 flex justify-between items-center">
+                        <div>
+                          <h3 className="font-semibold text-slate-900">课程规模</h3>
+                          <p className="text-sm text-slate-500">调整章节数量</p>
+                        </div>
+                        <span className="px-3 py-1 bg-violet-100 text-violet-700 rounded-full text-sm font-bold">
+                          {chapterCount} 章
+                        </span>
+                      </div>
+                    </div>
+                    <div className="pt-2">
                       <input
                         type="range"
-                        min="2"
+                        min="1"
                         max="12"
                         value={chapterCount}
                         onChange={(e) => setChapterCount(parseInt(e.target.value))}
-                        className="flex-1 h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-600 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg"
+                        className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-violet-600"
                       />
-                      <div className="w-16 md:w-20 h-10 md:h-12 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-lg md:text-lg shadow-lg flex-shrink-0">
-                        {chapterCount}
-                      </div>
-                    </div>
-                    <div className="flex justify-between text-xs text-slate-500">
-                      <span>精简 (2章)</span>
-                      <span className="hidden md:block">适中 (6章)</span>
-                      <span>详尽 (12章)</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-2 flex items-center gap-1">
-                    <span>💡</span>
-                    系统会根据主题自动优化章节数量和结构
-                  </p>
-                </div>
-              </div>
-
-              {/* 错误提示 */}
-              {error && (
-                <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-start gap-3 animate-shake">
-                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-red-700 font-medium">{error}</span>
-                </div>
-              )}
-
-              {/* 操作按钮 */}
-              <div className="flex flex-col md:flex-row gap-3 md:gap-4 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => navigate('/')}
-                  className="flex-1 h-12 border-2"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  返回首页
-                </Button>
-                <Button
-                  onClick={handleStartGeneration}
-                  className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all text-base font-semibold"
-                >
-                  <Zap className="w-5 h-5 mr-2" />
-                  开始生成课程
-                </Button>
-              </div>
-
-              {/* 功能说明 */}
-              <div className="grid grid-cols-3 gap-2 md:gap-4 pt-6 border-t">
-                {[
-                  { icon: '🤖', title: 'AI 智能设计', desc: '基于主题自动规划' },
-                  { icon: '⚡', title: '快速生成', desc: '仅需几秒钟' },
-                  { icon: '✏️', title: '灵活编辑', desc: '随时调整结构' }
-                ].map((feature, index) => (
-                  <div key={index} className="text-center p-4">
-                    <div className="text-3xl mb-2">{feature.icon}</div>
-                    <div className="font-semibold text-slate-800 text-sm mb-1">{feature.title}</div>
-                    <div className="text-xs text-slate-500">{feature.desc}</div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-
-          {phase === 'generating-structure' && (
-            <Card className="p-12 space-y-8">
-              {/* 生成结构中 */}
-              <div className="text-center">
-                <div className="relative w-24 h-24 mx-auto mb-6">
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 to-indigo-400 animate-ping opacity-20"></div>
-                  <div className="relative w-24 h-24 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center animate-pulse shadow-2xl">
-                    <Loader className="w-12 h-12 text-white animate-spin" />
-                  </div>
-                </div>
-                <h2 className="text-3xl font-bold text-slate-800 mb-3">AI 正在创造中...</h2>
-                <p className="text-lg text-slate-600">正在分析您的需求并智能设计课程结构</p>
-
-                {/* 进度动画 */}
-                <div className="mt-8 flex justify-center gap-2">
-                  {[0, 1, 2].map((i) => (
-                    <div
-                      key={i}
-                      className="w-3 h-3 rounded-full bg-blue-600 animate-bounce"
-                      style={{ animationDelay: `${i * 0.15}s` }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </Card>
-          )}
-
-          {phase === 'preview' && sessionData && (
-            <div className="space-y-6">
-              <Card className="p-8 space-y-6">
-                {/* 课程预览标题 */}
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold text-slate-800 mb-2">📚 课程结构预览</h2>
-                    <p className="text-slate-600">AI 已为您生成课程结构，可以继续编辑或直接提交生成完整课程</p>
-                  </div>
-                </div>
-
-                {/* 课程基本信息 */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-                      <span className="text-2xl">🎓</span>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold text-slate-800 mb-2">{sessionData.courseDraft.title}</h3>
-                      <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{sessionData.courseDraft.description}</p>
-
-                      {/* 课程统计 */}
-                      <div className="flex flex-wrap gap-4 mt-4">
-                        <div className="flex items-center gap-2 bg-white/60 backdrop-blur-sm px-3 py-1.5 rounded-lg">
-                          <span className="text-blue-600 font-semibold">{sessionData.courseDraft.chapters.length}</span>
-                          <span className="text-sm text-slate-600">章节</span>
-                        </div>
-                        <div className="flex items-center gap-2 bg-white/60 backdrop-blur-sm px-3 py-1.5 rounded-lg">
-                          <span className="text-blue-600 font-semibold">
-                            {sessionData.courseDraft.chapters.reduce((acc, ch) => acc + ch.lessons.length, 0)}
-                          </span>
-                          <span className="text-sm text-slate-600">课时</span>
-                        </div>
-                        <div className="flex items-center gap-2 bg-white/60 backdrop-blur-sm px-3 py-1.5 rounded-lg">
-                          <span className="text-blue-600 font-semibold">
-                            ~{Math.round(sessionData.courseDraft.chapters.reduce((acc, ch) =>
-                              acc + ch.lessons.reduce((sum, l) => sum + l.durationSeconds, 0), 0) / 60)}
-                          </span>
-                          <span className="text-sm text-slate-600">分钟</span>
-                        </div>
+                      <div className="flex justify-between text-xs text-slate-500 mt-3">
+                        <span>精简 (1~2章)</span>
+                        <span>标准 (4~6章)</span>
+                        <span>详尽 (9~12章)</span>
                       </div>
                     </div>
                   </div>
-                </div>
+                </Card>
+              </div>
 
-                {/* 错误提示 */}
-                {error && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-red-700">{error}</span>
+              {/* Step 4: AI Configuration */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                  <span className="flex items-center justify-center w-7 h-7 rounded-full bg-violet-100 text-violet-700 text-sm font-bold">4</span>
+                  选择 AI 引擎
+                </h2>
+                <Card className="border-2 border-slate-200">
+                  <div className="p-6 space-y-5">
+                    <div className="flex items-center gap-3 pb-4 border-b border-slate-200">
+                      <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                        <Settings className="w-5 h-5 text-indigo-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-slate-900">AI 引擎配置</h3>
+                        <p className="text-sm text-slate-500">选择生成模型</p>
+                      </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">服务商</label>
+                        <Select value={selectedProvider} onValueChange={setSelectedProvider}>
+                          <SelectTrigger className="h-11 border-2">
+                            <SelectValue placeholder="选择服务商" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {providerConfigs.map(p => (
+                              <SelectItem key={p.providerName} value={p.providerName}>
+                                {p.providerName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">模型</label>
+                        <Select value={selectedModel} onValueChange={setSelectedModel}>
+                          <SelectTrigger className="h-11 border-2">
+                            <SelectValue placeholder="选择模型" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {providerConfigs.find(p => p.providerName === selectedProvider)?.models.map(m => (
+                              <SelectItem key={m} value={m}>{m}</SelectItem>
+                            )) || <SelectItem value="none" disabled>请先选择服务商</SelectItem>}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {error && (
+                      <div className="p-3 bg-red-50 border-2 border-red-200 rounded-lg flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-red-700">{error}</span>
+                      </div>
+                    )}
+
+                    <Button
+                      onClick={handleStartGeneration}
+                      disabled={!topic.trim() || !selectedProvider || !selectedModel}
+                      className="w-full h-12 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all"
+                    >
+                      <Play className="w-5 h-5 mr-2" />
+                      开始生成课程
+                    </Button>
                   </div>
-                )}
+                </Card>
+              </div>
+            </div>
+          </div>
+        )}
 
-                {/* 编辑区域 */}
-                {isEditing && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 space-y-4">
+        {/* Generating Phase */}
+        {phase === 'generating-structure' && (
+          <div className="h-full flex flex-col items-center justify-center min-h-[60vh]">
+            <div className="text-center space-y-8">
+              <div className="relative w-40 h-40 mx-auto">
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-violet-400 to-purple-400 animate-ping opacity-20" />
+                <div className="relative w-40 h-40 rounded-full bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center shadow-2xl">
+                  <Loader2 className="w-20 h-20 text-white animate-spin" />
+                </div>
+              </div>
+              <div className="space-y-4">
+                <h2 className="text-3xl font-bold text-slate-900">AI 正在思考...</h2>
+                <p className="text-xl text-slate-600">正在根据您的需求并构建课程结构，请稍候</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Preview Phase */}
+        {phase === 'preview' && sessionData && (
+          <div className="max-w-7xl mx-auto space-y-6">
+            {/* Header */}
+            <Card className="border-2 border-violet-200 bg-gradient-to-br from-violet-50 to-purple-50">
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-lg">✏️</span>
-                      <h4 className="font-semibold text-slate-800">编辑课程结构</h4>
+                      <Badge variant="secondary" className="bg-violet-100 text-violet-700 border-violet-200">
+                        预览
+                      </Badge>
+                      <Badge variant="outline">{sessionData.courseDraft.chapters.length} 章</Badge>
+                      <Badge variant="outline">
+                        {sessionData.courseDraft.chapters.reduce((acc, ch) => acc + ch.lessons.length, 0)} 节
+                      </Badge>
                     </div>
-                    <p className="text-sm text-slate-600">
-                      请用自然语言描述您想要的修改，例如：
-                    </p>
-                    <ul className="text-sm text-slate-600 list-disc list-inside space-y-1 ml-2">
-                      <li>"增加一章关于高级特性的内容"</li>
-                      <li>"把第一章拆分为两章，内容更详细些"</li>
-                      <li>"增加更多实战练习课时"</li>
-                    </ul>
-                    <textarea
-                      value={editInstruction}
-                      onChange={(e) => setEditInstruction(e.target.value)}
-                      placeholder="输入您的修改建议..."
-                      className="w-full px-4 py-3 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
-                      rows={4}
-                    />
+                    <h2 className="text-2xl font-bold text-slate-900 mb-2">{sessionData.courseDraft.title}</h2>
+                    <p className="text-slate-700 leading-relaxed">{sessionData.courseDraft.description}</p>
+                  </div>
+                </div>
+
+                {!isEditing && (
+                  <div className="flex flex-col gap-4">
+                    {/* Advanced Settings Toggle */}
+                    <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => setShowAdvanced(!showAdvanced)} className="text-slate-500">
+                            {showAdvanced ? <ChevronUp className="w-4 h-4 mr-1"/> : <ChevronDown className="w-4 h-4 mr-1"/>}
+                            高级设置
+                        </Button>
+                    </div>
+                    
+                    {showAdvanced && (
+                        <div className="bg-white/50 p-4 rounded-lg border border-slate-200 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-0.5">
+                                    <label className="text-sm font-medium text-slate-700">并行生成</label>
+                                    <p className="text-xs text-slate-500">同时生成多个课时，加快生成速度</p>
+                                </div>
+                                <Switch checked={enableParallel} onCheckedChange={setEnableParallel} />
+                            </div>
+                            {enableParallel && (
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <label className="text-sm font-medium text-slate-700">并行线程数: {parallelThreads}</label>
+                                    </div>
+                                    <Slider 
+                                        value={[parallelThreads]} 
+                                        onValueChange={(v) => setParallelThreads(v[0])} 
+                                        min={2} 
+                                        max={10} 
+                                        step={1} 
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     <div className="flex gap-3">
                       <Button
                         variant="outline"
-                        onClick={() => {
-                          setIsEditing(false);
-                          setEditInstruction('');
-                          setError('');
-                        }}
-                        className="flex-1"
+                        onClick={() => setIsEditing(true)}
+                        className="border-2"
                       >
-                        取消
+                        <Edit3 className="w-4 h-4 mr-2" />
+                        调整结构
                       </Button>
                       <Button
-                        onClick={handleEditCourse}
-                        disabled={isEditingCourse || !editInstruction.trim()}
-                        className="flex-1 bg-amber-600 hover:bg-amber-700 text-white"
+                        onClick={handleSubmitCourse}
+                        className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-lg"
                       >
-                        {isEditingCourse ? (
-                          <>
-                            <Loader className="w-4 h-4 mr-2 animate-spin" />
-                            AI 优化中...
-                          </>
-                        ) : (
-                          '应用修改'
-                        )}
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        确认生成
                       </Button>
                     </div>
                   </div>
                 )}
+              </div>
+            </Card>
 
-                {/* 操作按钮 */}
-                {!isEditing && (
+            {/* Edit Panel */}
+            {isEditing && (
+              <Card className="border-2 border-amber-300 bg-amber-50">
+                <div className="p-6 space-y-4">
+                  <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                    <Edit3 className="w-5 h-5" />
+                    调整课程结构
+                  </h3>
+                  <Textarea
+                    value={editInstruction}
+                    onChange={(e) => setEditInstruction(e.target.value)}
+                    placeholder="描述您想要的修改，例如：增加一章关于实战项目的内容..."
+                    className="min-h-[100px] border-2 border-amber-300"
+                  />
                   <div className="flex gap-3">
                     <Button
                       variant="outline"
                       onClick={() => {
-                        setPhase('form');
-                        setSessionData(null);
+                        setIsEditing(false);
+                        setEditInstruction('');
                       }}
-                      className="flex-1"
+                      className="border-2"
                     >
-                      <ArrowLeft className="w-4 h-4 mr-2" />
-                      重新生成
+                      取消
                     </Button>
                     <Button
-                      variant="outline"
-                      onClick={() => setIsEditing(true)}
-                      className="flex-1 border-amber-300 text-amber-700 hover:bg-amber-50"
+                      onClick={handleEditCourse}
+                      disabled={isEditingCourse || !editInstruction.trim()}
+                      className="bg-amber-600 hover:bg-amber-700 text-white"
                     >
-                      ✏️ 编辑结构
-                    </Button>
-                    <Button
-                      onClick={handleSubmitCourse}
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg"
-                    >
-                      <Zap className="w-4 h-4 mr-2" />
-                      确认并生成
+                      {isEditingCourse ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          处理中...
+                        </>
+                      ) : (
+                        '应用修改'
+                      )}
                     </Button>
                   </div>
-                )}
-              </Card>
-
-              {/* 章节列表 */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                    <span>📖</span>
-                    课程目录
-                  </h3>
-                  <span className="text-sm text-slate-500">
-                    {sessionData.courseDraft.chapters.length} 章 · {sessionData.courseDraft.chapters.reduce((acc, ch) => acc + ch.lessons.length, 0)} 节课
-                  </span>
                 </div>
+              </Card>
+            )}
 
-                {sessionData.courseDraft.chapters.map((chapter) => (
-                  <Card key={chapter.sequence} className="overflow-hidden hover:shadow-md transition-shadow">
-                    {/* 章节头部 */}
-                    <div className="bg-gradient-to-r from-slate-50 to-blue-50 px-6 py-4 border-b border-slate-200">
-                      <div className="flex items-start gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold flex-shrink-0">
-                          {chapter.sequence}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-bold text-slate-800 text-lg mb-1">{chapter.title}</h4>
-                          <p className="text-sm text-slate-600 leading-relaxed">{chapter.description}</p>
-                          <div className="flex items-center gap-4 mt-3 text-xs text-slate-500">
-                            <span>📝 {chapter.lessons.length} 节课</span>
-                            <span>⏱️ ~{Math.round(chapter.lessons.reduce((sum, l) => sum + l.durationSeconds, 0) / 60)} 分钟</span>
-                          </div>
-                        </div>
+            {/* Chapter List */}
+            <div className="grid gap-4">
+              {sessionData.courseDraft.chapters.map((chapter, idx) => (
+                <Card key={chapter.sequence} className="border-2 border-slate-200 hover:border-violet-300 transition-colors overflow-hidden">
+                  <div className="flex">
+                    {/* Chapter Index */}
+                    <div className="w-20 bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center">
+                      <span className="text-3xl font-bold text-white">{chapter.sequence}</span>
+                    </div>
+                    {/* Chapter Content */}
+                    <div className="flex-1 p-6">
+                      <h4 className="text-lg font-bold text-slate-900 mb-2">{chapter.title}</h4>
+                      <p className="text-sm text-slate-600 mb-4">{chapter.description}</p>
+                      <div className="space-y-2">
+                        {chapter.lessons.map((lesson) => (
+                          <LessonItem key={lesson.sequence} lesson={lesson} />
+                        ))}
                       </div>
                     </div>
-
-                    {/* 课时列表 */}
-                    <div className="px-6 py-4 space-y-3">
-                      {chapter.lessons.map((lesson) => (
-                        <div
-                          key={lesson.sequence}
-                          className="flex items-start gap-4 p-3 rounded-lg hover:bg-slate-50 transition-colors group"
-                        >
-                          <div className="flex items-center gap-3 flex-shrink-0">
-                            <span className="text-sm font-semibold text-slate-400 min-w-[2rem]">
-                              {chapter.sequence}.{lesson.sequence}
-                            </span>
-                            <div className="w-2 h-2 rounded-full bg-blue-400 group-hover:bg-blue-600 transition-colors" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h5 className="font-medium text-slate-800 group-hover:text-blue-600 transition-colors">
-                              {lesson.title}
-                            </h5>
-                            {lesson.description && (
-                              <p className="text-sm text-slate-600 mt-1 line-clamp-2">{lesson.description}</p>
-                            )}
-                          </div>
-                          <span className="text-xs text-slate-500 font-medium bg-slate-100 px-2 py-1 rounded flex-shrink-0">
-                            {Math.round(lesson.durationSeconds / 60)}分钟
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                ))}
-              </div>
-
-              {/* 底部提示 */}
-              <Card className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">💡</span>
-                  <div className="flex-1 text-sm text-slate-700">
-                    <p className="font-medium mb-1">温馨提示</p>
-                    <p>确认后将为每节课生成详细的教学大纲和内容结构，预计需要 1-3 分钟。</p>
                   </div>
-                </div>
-              </Card>
+                </Card>
+              ))}
             </div>
-          )}
+          </div>
+        )}
 
-          {phase === 'submitting' && status && (
-            <Card className="p-12 space-y-8 bg-gradient-to-br from-blue-50 to-indigo-50">{/* 生成中标题 */}
-              <div className="text-center">
-                <div className="relative w-24 h-24 mx-auto mb-6">
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 to-indigo-400 animate-ping opacity-20"></div>
-                  <div className="relative w-24 h-24 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center animate-pulse shadow-2xl">
-                    <Zap className="w-12 h-12 text-white animate-pulse" />
-                  </div>
-                </div>
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-3">
-                  AI 正在创作完整课程...
-                </h2>
-                <p className="text-lg text-slate-600">正在为您智能设计课程结构和内容</p>
-              </div>
-
-              {/* 进度显示 */}
-              <div className="space-y-6">
-                {/* 整体进度条 */}
-                <div className="bg-white rounded-xl p-6 shadow-sm">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-base font-semibold text-slate-800">总体进度</span>
-                    <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                      {Math.round(status.progress)}%
-                    </span>
-                  </div>
-                  <Progress value={status.progress} className="h-4 bg-slate-100" />
-                </div>
-
-                {/* 步骤进度 */}
-                <div className="bg-white rounded-xl p-6 shadow-sm">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-base font-semibold text-slate-800">步骤进度</span>
-                    <span className="text-sm text-slate-600 font-medium">
-                      {status.completedSteps} / {status.totalSteps} 已完成
-                    </span>
-                  </div>
-                  <Progress
-                    value={(status.completedSteps / status.totalSteps) * 100}
-                    className="h-3 bg-slate-100"
-                  />
+        {/* Submitting Phase */}
+        {phase === 'submitting' && status && (
+          <div className="h-full flex flex-col items-center justify-center min-h-[60vh]">
+            <div className="w-full max-w-3xl text-center space-y-10">
+              <div className="relative w-32 h-32 mx-auto">
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-violet-400 to-purple-400 animate-ping opacity-20" />
+                <div className="relative w-32 h-32 rounded-full bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center shadow-2xl">
+                  <Loader2 className="w-16 h-16 text-white animate-spin" />
                 </div>
               </div>
-
-              {/* 当前步骤信息 */}
-              <div className="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-xl p-6 border-2 border-blue-200 shadow-lg">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg">
-                    <Loader className="w-5 h-5 text-white animate-spin" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-slate-800 mb-2 text-lg">
-                      {getStepLabel(status.currentStep)}
-                    </p>
-                    <p className="text-slate-700">{status.stepDescription}</p>
-                  </div>
-                </div>
+              
+              <div className="space-y-4">
+                <h2 className="text-4xl font-bold text-slate-900">正在生成完整课程</h2>
+                <p className="text-2xl text-slate-600">{status.stepDescription}</p>
               </div>
 
-              {/* 课程信息摘要 */}
-              <div className="bg-white rounded-xl p-6 shadow-sm space-y-3">
-                <div className="flex items-center gap-2 mb-4">
-                  <GraduationCap className="w-5 h-5 text-blue-600" />
-                  <h3 className="font-bold text-slate-800">课程信息</h3>
+              <div className="space-y-8 max-w-xl mx-auto">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-base font-medium">
+                    <span className="text-slate-700">总体进度</span>
+                    <span className="text-violet-600">{Math.round(status.progress)}%</span>
+                  </div>
+                  <Progress value={status.progress} className="h-4" />
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <span className="text-slate-600 min-w-[80px]">课程主题</span>
-                    <span className="font-medium text-slate-800">{topic}</span>
+                  <div className="flex justify-between text-sm font-medium">
+                    <span className="text-slate-600">步骤进度</span>
+                    <span className="text-slate-500">{status.completedSteps} / {status.totalSteps}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-slate-600 min-w-[80px]">难度等级</span>
-                    <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
-                      {difficulty === 'easy' ? '初级' : difficulty === 'medium' ? '中级' : '高级'}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-slate-600 min-w-[80px]">建议章节</span>
-                    <span className="font-medium text-slate-800">{chapterCount} 章</span>
-                  </div>
+                  <Progress value={(status.completedSteps / status.totalSteps) * 100} className="h-2" />
                 </div>
               </div>
+            </div>
+          </div>
+        )}
 
-              {/* 提示 */}
-              <div className="bg-amber-50 rounded-xl p-5 border-2 border-amber-200 shadow-sm">
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">💡</span>
-                  <p className="text-amber-800 flex-1">
-                    正在为每节课生成详细大纲，可能需要 1-3 分钟，请耐心等待。生成过程中请不要关闭页面。
-                  </p>
+        {/* Success Phase */}
+        {phase === 'success' && status && (
+          <div className="h-full flex flex-col items-center justify-center min-h-[60vh]">
+            <div className="text-center space-y-10">
+              <div className="relative w-40 h-40 mx-auto">
+                <div className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-20" />
+                <div className="relative w-40 h-40 rounded-full bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-2xl">
+                  <CheckCircle2 className="w-20 h-20 text-white" />
                 </div>
               </div>
-            </Card>
-          )}
-
-          {phase === 'success' && status && (
-            <Card className="p-12 space-y-8 bg-gradient-to-br from-green-50 to-emerald-50">
-              {/* 成功标题 */}
-              <div className="text-center">
-                <div className="relative mb-6">
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 flex items-center justify-center mx-auto shadow-2xl">
-                    <CheckCircle className="w-14 h-14 text-white" />
-                  </div>
-                  <div className="absolute inset-0 -z-10 w-24 h-24 rounded-full bg-green-400 animate-ping opacity-20 mx-auto"></div>
-                </div>
-
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-3">
-                  🎉 课程生成完成！
-                </h2>
-                <p className="text-lg text-slate-600 mb-8">
-                  您的 AI 课程已成功创建，快去查看吧！
+              
+              <div className="space-y-6">
+                <h2 className="text-5xl font-bold text-slate-900">课程创建成功！</h2>
+                <p className="text-2xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+                  {status.generatedCourseTitle}
                 </p>
-
-                {status.generatedCourseTitle && (
-                  <div className="bg-white rounded-xl p-6 shadow-lg mb-8 border border-green-100">
-                    <div className="flex items-center justify-center gap-3 mb-3">
-                      <GraduationCap className="w-6 h-6 text-green-600" />
-                      <h3 className="text-xl font-bold text-slate-800">
-                        {status.generatedCourseTitle}
-                      </h3>
-                    </div>
-                    <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-1">
-                      已发布
-                    </Badge>
-                  </div>
-                )}
-              </div>
-
-              {/* 生成结果 */}
-              <div className="bg-white rounded-xl p-6 border border-green-100 space-y-4">
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-medium text-slate-800">课程标题</p>
-                    <p className="text-slate-600">{status.generatedCourseTitle}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-medium text-slate-800">UUID</p>
-                    <p className="text-sm text-slate-600 font-mono break-all">{status.generatedCourseUuid}</p>
-                  </div>
+                <div>
+                  <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-lg px-4 py-1">
+                    已发布
+                  </Badge>
                 </div>
               </div>
 
-              {/* 后续操作 */}
-              <div className="space-y-3">
-                <div className="flex gap-4 justify-center">
-                  <Button
-                    onClick={() => navigate('/settings/courses')}
-                    size="lg"
-                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all duration-300 px-8"
-                  >
-                    <Eye className="w-5 h-5 mr-2" />
-                    返回课程管理
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setPhase('form');
-                      setTopic('');
-                      setDifficulty('medium');
-                      setChapterCount(3);
-                      setStatus(null);
-                    }}
-                    variant="outline"
-                    size="lg"
-                    className="border-2 border-slate-300 hover:border-green-500 hover:bg-green-50 px-8 transition-all duration-300"
-                  >
-                    继续创建课程
-                  </Button>
-                </div>
-                <div className="text-center">
-                  <Button
-                    onClick={() => navigate('/settings/courses')}
-                    variant="ghost"
-                    className="text-slate-600 hover:text-slate-800"
-                  >
-                    返回课程管理
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          )}
-
-          {phase === 'error' && (
-            <Card className="p-8 space-y-6">
-              {/* 错误标题 */}
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-                  <AlertCircle className="w-8 h-8 text-red-600" />
-                </div>
-                <h2 className="text-2xl font-bold text-slate-800 mb-2">课程生成失败</h2>
-                <p className="text-slate-600">很遗憾，课程生成过程中出现了问题</p>
-              </div>
-
-              {/* 错误信息 */}
-              <div className="bg-red-50 rounded-lg p-4 border border-red-200">
-                <p className="text-sm text-red-700">{error}</p>
-              </div>
-
-              {/* 操作按钮 */}
-              <div className="flex gap-3">
+              <div className="flex gap-6 justify-center pt-8">
+                <Button
+                  onClick={() => navigate('/settings/courses')}
+                  size="lg"
+                  className="h-14 px-8 text-lg bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white shadow-xl hover:shadow-2xl transition-all"
+                >
+                  查看课程
+                </Button>
                 <Button
                   onClick={() => {
                     setPhase('form');
-                    setError('');
+                    setTopic('');
+                    setTargetAudience('youth');
+                    setComplexity('moderate');
+                    setChapterCount(6);
                     setStatus(null);
                   }}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  重新尝试
-                </Button>
-                <Button
-                  onClick={() => navigate('/')}
                   variant="outline"
-                  className="flex-1"
+                  size="lg"
+                  className="h-14 px-8 text-lg border-2 hover:bg-slate-50"
                 >
-                  返回首页
+                  继续创建
                 </Button>
               </div>
-            </Card>
-          )}
-        </div>
-      </div>
+            </div>
+          </div>
+        )}
 
+        {/* Error Phase */}
+        {phase === 'error' && (
+          <div className="max-w-2xl mx-auto">
+            <Card className="border-2 border-red-200 bg-red-50">
+              <div className="p-12 text-center space-y-6">
+                <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mx-auto">
+                  <AlertCircle className="w-10 h-10 text-red-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900 mb-2">生成失败</h2>
+                  <p className="text-slate-600">{error}</p>
+                </div>
+                <div className="flex gap-4 justify-center">
+                  <Button
+                    onClick={() => {
+                      setPhase('form');
+                      setError('');
+                      setStatus(null);
+                    }}
+                    className="bg-slate-900 hover:bg-slate-800 text-white"
+                  >
+                    重新开始
+                  </Button>
+                  <Button
+                    onClick={() => navigate('/settings/courses')}
+                    variant="outline"
+                    className="border-2"
+                  >
+                    返回列表
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+      </div>
+      <CourseGenerationTasks open={showTasks} onOpenChange={setShowTasks} />
     </SettingsLayout>
   );
 };
-
-// 辅助函数：获取步骤描述
-function getStepLabel(step: string): string {
-  const labels: Record<string, string> = {
-    'STRUCTURE_COMPLETED': '课程结构已生成',
-    'PERSISTING': '开始持久化课程数据',
-    'GENERATING_OUTLINES': '生成课程大纲',
-    'PERSISTED': '课程数据已保存',
-  };
-  return labels[step] || '处理中...';
-}
 
 export default CreateCoursePage;

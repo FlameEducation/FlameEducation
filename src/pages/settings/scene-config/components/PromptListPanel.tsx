@@ -2,7 +2,7 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { SceneConfig } from '@/api/sceneConfig';
+import { SceneConfig } from '@/api/promptConfig';
 
 interface PromptListPanelProps {
   prompts: SceneConfig[];
@@ -12,6 +12,7 @@ interface PromptListPanelProps {
   loading: boolean;
   disableCreate: boolean;
   isCreating: boolean;
+  className?: string;
 }
 
 const PromptListPanel: React.FC<PromptListPanelProps> = ({
@@ -22,6 +23,7 @@ const PromptListPanel: React.FC<PromptListPanelProps> = ({
   loading,
   disableCreate,
   isCreating,
+  className,
 }) => {
   const renderContent = () => {
     if (loading) {
@@ -59,7 +61,7 @@ const PromptListPanel: React.FC<PromptListPanelProps> = ({
                   {(prompt as any).isJsonFormat && (
                     <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">JSON</span>
                   )}
-                  {(prompt as any).enableThinking && (
+                  {(prompt as any).thinkingStatus === 1 && (
                     <span className="rounded bg-purple-100 px-1.5 py-0.5 text-[10px] font-medium text-purple-700">思考</span>
                   )}
                 </div>
@@ -75,7 +77,7 @@ const PromptListPanel: React.FC<PromptListPanelProps> = ({
   };
 
   return (
-    <Card className="flex h-full flex-col gap-4 border border-slate-200 bg-white p-5">
+    <Card className={`flex flex-col gap-4 border border-slate-200 bg-white p-5 ${className || 'h-full'}`}>
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold text-slate-900">提示词列表</h3>

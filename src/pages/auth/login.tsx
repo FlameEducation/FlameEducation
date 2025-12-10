@@ -269,12 +269,6 @@ const Login: React.FC = () => {
             </Button>
           </form>
 
-          {/* 底部装饰 */}
-          <div className="mt-8 pt-6 border-t border-gray-200/50">
-            <p className="text-center text-sm text-gray-500">
-              首次登录即自动注册
-            </p>
-          </div>
         </div>
       </div>
 

@@ -61,7 +61,11 @@ const ProfilePage: React.FC = () => {
         </div>
         <div className="flex-1 text-center md:text-left space-y-2">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">{userInfo?.nickname || '未登录'}</h2>
+            <div className="flex items-center justify-center md:justify-start gap-2">
+              <h2 className="text-2xl font-bold text-gray-900">{userInfo?.nickname || '未登录'}</h2>
+              {userInfo?.gender === 'male' && <User className="w-5 h-5 text-blue-500" />}
+              {userInfo?.gender === 'female' && <User className="w-5 h-5 text-pink-500" />}
+            </div>
             <p className="text-gray-500 text-sm mt-1">开启你的AI学习之旅</p>
           </div>
           

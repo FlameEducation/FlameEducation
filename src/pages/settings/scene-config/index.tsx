@@ -15,7 +15,7 @@ import {
   SceneType,
   CreateScenePromptRequest,
   UpdateScenePromptRequest,
-} from '@/api/sceneConfig';
+} from '@/api/promptConfig';
 import { listAiProviders, AiProviderConfig } from '@/api/ai-provider';
 import { toast } from 'sonner';
 
@@ -34,7 +34,8 @@ const SceneConfigPage: React.FC = () => {
     aiModelName: '',
     aiServiceProvider: '',
     isJsonFormat: false,
-    enableThinking: false,
+    thinkingStatus: -1,
+    messageLength: 10,
     isEnabled: true,
   });
   const [editingData, setEditingData] = useState<UpdateScenePromptRequest>({ sceneUuid: '' });
@@ -121,6 +122,9 @@ const SceneConfigPage: React.FC = () => {
       promptContent: initial?.promptContent || '',
       aiModelName: initial?.aiModelName || '',
       aiServiceProvider: initial?.aiServiceProvider || '',
+      isJsonFormat: initial?.isJsonFormat || false,
+      thinkingStatus: initial?.thinkingStatus || -1,
+      messageLength: initial?.messageLength || 10,
       isEnabled: initial?.isEnabled ?? true,
     });
     setDialogOpen(true);
@@ -130,19 +134,8 @@ const SceneConfigPage: React.FC = () => {
     if (!selectedPrompt) {
       return;
     }
-    if (selectedPrompt.isSystemTemplate) {
-      toast.error('系统提示词不可编辑');
-      return;
-    }
     setDialogMode('edit');
-    setEditingData({
-      sceneUuid: selectedPrompt.sceneUuid,
-      promptName: selectedPrompt.promptName,
-      promptContent: selectedPrompt.promptContent,
-      aiModelName: selectedPrompt.aiModelName,
-      aiServiceProvider: selectedPrompt.aiServiceProvider,
-      isEnabled: selectedPrompt.isEnabled,
-    });
+    setEditingData(selectedPrompt);
     setDialogOpen(true);
   };
 
@@ -195,6 +188,10 @@ const SceneConfigPage: React.FC = () => {
     if (!selectedPromptUuid) {
       return;
     }
+    if (selectedPrompt?.isSystemTemplate) {
+      toast.error('系统默认提示词不可删除');
+      return;
+    }
     if (!window.confirm('确认删除该提示词？')) {
       return;
     }
@@ -219,18 +216,19 @@ const SceneConfigPage: React.FC = () => {
     >
 
       <div className="flex min-h-[calc(100vh-160px)] flex-col gap-4">
-        <div className="flex flex-1 gap-4 overflow-hidden">
+        <div className="flex flex-col md:flex-row flex-1 gap-4 overflow-y-auto md:overflow-hidden">
 
-          <div className="w-56 flex-shrink-0">
+          <div className="w-full md:w-56 flex-shrink-0">
             <SceneSidebar
               scenes={scenes}
               currentSceneType={currentSceneType}
               onSceneChange={value => setCurrentSceneType(value)}
               sceneProviders={activeProviders}
+              className="h-auto md:h-full"
             />
           </div>
 
-          <div className="w-72 flex-shrink-0">
+          <div className="w-full md:w-72 flex-shrink-0">
             <PromptListPanel
               prompts={prompts}
               selectedPromptUuid={selectedPromptUuid}
@@ -239,6 +237,7 @@ const SceneConfigPage: React.FC = () => {
               loading={loadingPrompts}
               disableCreate={activeProviders.length === 0 || loadingProviders}
               isCreating={false}
+              className="h-[400px] md:h-full"
             />
           </div>
 
@@ -251,6 +250,7 @@ const SceneConfigPage: React.FC = () => {
               onDeletePrompt={handleDeletePrompt}
               onCopyPrompt={handleCopyPrompt}
               loading={loadingPrompts}
+              className={`md:h-full ${selectedPrompt ? 'h-auto min-h-[500px]' : 'h-[200px]'}`}
             />
           </div>
         </div>

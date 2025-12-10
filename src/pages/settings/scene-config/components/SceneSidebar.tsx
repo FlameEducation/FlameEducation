@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { SceneInfo, SceneType } from '@/api/sceneConfig';
+import { SceneInfo, SceneType } from '@/api/promptConfig';
 import { AiProviderConfig } from '@/api/ai-provider';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
@@ -11,13 +11,14 @@ interface SceneSidebarProps {
   currentSceneType: SceneType;
   onSceneChange: (sceneType: SceneType) => void;
   sceneProviders: AiProviderConfig[];
+  className?: string;
 }
 
-const SceneSidebar: React.FC<SceneSidebarProps> = ({ scenes, currentSceneType, onSceneChange, sceneProviders }) => {
+const SceneSidebar: React.FC<SceneSidebarProps> = ({ scenes, currentSceneType, onSceneChange, sceneProviders, className }) => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className={`flex flex-col gap-4 ${className || 'h-full'}`}>
       <Card className="border border-slate-200 bg-white">
         <div className="border-b border-slate-100 px-5 py-4">
           <h2 className="text-sm font-semibold text-slate-900">场景列表</h2>

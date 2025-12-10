@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { AiProviderConfig } from '@/api/ai-provider';
-import { CreateScenePromptRequest, SceneConfig, SceneInfo, UpdateScenePromptRequest } from '@/api/sceneConfig';
+import { CreateScenePromptRequest, SceneConfig, SceneInfo, UpdateScenePromptRequest } from '@/api/promptConfig';
 import { PromptPlaceholder, PromptPlaceholderCategory } from '../placeholders';
 import { Copy, Edit, Lock, Plus, Power, Trash2, X } from 'lucide-react';
 
@@ -197,14 +197,16 @@ const PromptEditorPanel: React.FC<PromptEditorPanelProps> = ({
         </div>
         <p className="mt-1 text-sm text-slate-500">{selectedPrompt.aiModelName} · {selectedPrompt.aiServiceProvider}</p>
       </div>
-      {mode === 'view' && !isSystemPrompt ? (
+      {mode === 'view' ? (
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={onStartEdit}>
             <Edit className="mr-2 h-4 w-4" /> 编辑
           </Button>
-          <Button variant="outline" size="sm" onClick={onDeletePrompt} className="border-red-200 text-red-600 hover:bg-red-50">
-            <Trash2 className="mr-2 h-4 w-4" /> 删除
-          </Button>
+          {!isSystemPrompt && (
+            <Button variant="outline" size="sm" onClick={onDeletePrompt} className="border-red-200 text-red-600 hover:bg-red-50">
+              <Trash2 className="mr-2 h-4 w-4" /> 删除
+            </Button>
+          )}
         </div>
       ) : null}
     </div>
@@ -264,7 +266,6 @@ const PromptEditorPanel: React.FC<PromptEditorPanelProps> = ({
           <Select
             value={editingData.aiServiceProvider || ''}
             onValueChange={value => onEditingDataChange({ aiServiceProvider: value })}
-            disabled={isSystemPrompt}
           >
             <SelectTrigger>
               <SelectValue placeholder="选择服务商" />
@@ -286,13 +287,20 @@ const PromptEditorPanel: React.FC<PromptEditorPanelProps> = ({
           selectedCategory={selectedCategory}
           onCategoryChange={onCategoryChange}
           onSelect={placeholder => onInsertPlaceholder('edit', placeholder)}
+          readOnly={isSystemPrompt}
           textarea={
-            <Textarea
-              ref={editPromptRef}
-              value={editingData.promptContent || ''}
-              onChange={event => onEditingDataChange({ promptContent: event.target.value })}
-              className="min-h-[320px] flex-1 resize-none font-mono text-sm"
-            />
+            isSystemPrompt ? (
+              <div className="min-h-[320px] w-full rounded-md border border-slate-200 bg-slate-50 p-3 font-mono text-sm text-slate-600 whitespace-pre-wrap">
+                {editingData.promptContent}
+              </div>
+            ) : (
+              <Textarea
+                ref={editPromptRef}
+                value={editingData.promptContent || ''}
+                onChange={event => onEditingDataChange({ promptContent: event.target.value })}
+                className="min-h-[320px] flex-1 resize-none font-mono text-sm"
+              />
+            )
           }
           footer={
             <div className="flex items-center justify-between text-xs text-slate-600">
@@ -327,6 +335,7 @@ interface PromptPlaceholderPanelProps {
   onSelect: (placeholder: string) => void;
   textarea: React.ReactNode;
   footer?: React.ReactNode;
+  readOnly?: boolean;
 }
 
 const PromptPlaceholderPanel: React.FC<PromptPlaceholderPanelProps> = ({
@@ -338,10 +347,12 @@ const PromptPlaceholderPanel: React.FC<PromptPlaceholderPanelProps> = ({
   onSelect,
   textarea,
   footer,
+  readOnly,
 }) => {
   const categories: Array<{ value: PromptPlaceholderCategory | 'all'; label: string }> = [
     { value: 'all', label: '全部分类' },
-    { value: 'lesson', label: '课时相关' },
+    { value: 'lesson', label: '课节相关' },
+    { value: 'course', label: '课程相关' },
     { value: 'user', label: '用户相关' },
     { value: 'tool', label: '工具相关' },
   ];
@@ -350,13 +361,15 @@ const PromptPlaceholderPanel: React.FC<PromptPlaceholderPanelProps> = ({
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <Label>提示词内容 *</Label>
-        <Button variant="ghost" size="sm" onClick={onToggle}>
-          {showPlaceholders ? '隐藏占位符' : '显示占位符'}
-        </Button>
+        {!readOnly && (
+          <Button variant="ghost" size="sm" onClick={onToggle}>
+            {showPlaceholders ? '隐藏占位符' : '显示占位符'}
+          </Button>
+        )}
       </div>
       <div className="flex gap-4">
         <div className="flex-1">{textarea}</div>
-        {showPlaceholders ? (
+        {showPlaceholders && !readOnly ? (
           <div className="w-64 rounded-lg border border-slate-200 bg-slate-50 p-3">
             <Select value={selectedCategory} onValueChange={value => onCategoryChange(value as PromptPlaceholderCategory | 'all')}>
               <SelectTrigger className="h-8 text-xs">

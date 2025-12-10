@@ -28,8 +28,8 @@ export const sendMessageStreamNew = async (
     onTextReceived?: (text: string, blockNum?: number) => void;
     onProgressReceived?: (cid: string, pid: string, finished: boolean) => void;
     onAudioReceived?: (audioBase64: string, blockNum?: number) => void;
-    onBlackboardReceived?: (blackboardUuid: string) => void;
-    onImageReceived?: (imageUrl: string) => void;
+    onBlackboardReceived?: (blackboardUuid: string, title?: string) => void;
+    onImageReceived?: (imageUrl: string, title?: string) => void;
     onMindMapReceived?: (mindMapUuid: string) => void;
     onUserAudioReceived?: (audioUrl: string) => void;
     onExerciseReceived?: (exerciseUuid: string) => void;
@@ -111,10 +111,10 @@ export const sendMessageStreamNew = async (
           break;
         }
         case 'blackboard':
-          callback?.onBlackboardReceived?.(jsonData.data.uuid);
+          callback?.onBlackboardReceived?.(jsonData.data.uuid, jsonData.data.title);
           break;
         case 'image':
-          callback?.onImageReceived?.(jsonData.data.uuid);
+          callback?.onImageReceived?.(jsonData.data.uuid, jsonData.data.title);
           break;
         case 'mindmap':
           callback?.onMindMapReceived?.(jsonData.data.uuid);
@@ -130,7 +130,7 @@ export const sendMessageStreamNew = async (
           callback?.onComplete?.();
           break;
         case 'error':
-          callback?.onError?.(new Error(jsonData.message || '处理请求时发生错误'));
+          callback?.onError?.(new Error(jsonData.data));
           break;
         case 'progress':
           const { cid, pid, finished } = jsonData.data || {};

@@ -244,7 +244,7 @@ export const BottomInputArea: React.FC<BottomInputAreaProps> = ({
   const currentMode = modeConfig[inputMode];
 
   return (
-    <div className="bottom-0 left-0 w-full relative z-[50]">
+    <div className="bottom-0 left-0 w-full relative">
       {/* 上层：悬浮控制栏 */}
       <div className="flex items-center justify-between px-2 pb-2">
         {/* 左侧：视图切换和教师选择 */}

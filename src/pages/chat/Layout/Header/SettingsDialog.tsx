@@ -6,6 +6,17 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog.tsx";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 // Removed unused UI component imports
 import { Button } from '@/components/ui/button';
 import { useChatHistoryContext } from '@/pages/chat/context/ChatHistoryContext';
@@ -25,6 +36,9 @@ import {
   BookOpen,
   Sparkles,
   RefreshCw,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
   // Removed unused Clock icon
 } from 'lucide-react';
 import { useEnergyOrb } from '@/pages/chat/context/EnergyOrbContext';
@@ -33,11 +47,19 @@ import { useEnergyOrb } from '@/pages/chat/context/EnergyOrbContext';
 interface SettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  zoomLevel: number;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  onResetZoom: () => void;
 }
 
 export const SettingsDialog: React.FC<SettingsDialogProps> = ({
   open,
   onOpenChange,
+  zoomLevel,
+  onZoomIn,
+  onZoomOut,
+  onResetZoom,
 }) => {
 
   const { clearHistory, isLoading: isChatHistoryLoading } = useChatHistoryContext();
@@ -51,7 +73,7 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
     setLiquidPercentage(0);
   };
 
-  const handleClearHistory = async () => {
+  const handleRestartLesson = async () => {
     await clearHistory();
     onOpenChange(false); // 关闭对话框
   };
@@ -75,17 +97,8 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col h-full overflow-hidden">
-          <TabsList className="grid w-full grid-cols-3 mb-4 bg-gray-100/50 flex-shrink-0">
-            <TabsTrigger value="general" className="text-xs font-medium">
-              常规设置
-            </TabsTrigger>
-            <TabsTrigger value="debug" className="text-xs font-medium">
-              调试工具
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="general" className="space-y-4 overflow-y-auto flex-1 pr-2">
+        <div className="w-full flex flex-col h-full overflow-hidden">
+          <div className="space-y-4 overflow-y-auto flex-1 pr-2 px-6">
 
             {/* 快速操作区域 */}
             <div className="space-y-3">
@@ -94,87 +107,123 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
                 <h3 className="font-semibold text-gray-800">快速操作</h3>
               </div>
 
-              {/* 返回首页快捷导航 */}
-              <div className="space-y-2">
+              {/* 移动端缩放控制 */}
+              <div className="md:hidden space-y-2 mb-4 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-600 font-medium">页面缩放</span>
+                  <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+                    {Math.round(zoomLevel * 100)}%
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 h-9" 
+                    onClick={onZoomOut}
+                  >
+                    <ZoomOut className="h-4 w-4 mr-1" />
+                    缩小
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 h-9" 
+                    onClick={onZoomIn}
+                  >
+                    <ZoomIn className="h-4 w-4 mr-1" />
+                    放大
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-9 w-9" 
+                    onClick={onResetZoom}
+                    title="重置"
+                  >
+                    <RotateCcw className="h-4 w-4 text-gray-500" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* 导航按钮组 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Button
                   onClick={() => {
                     window.location.href = '/';
                   }}
                   variant="outline"
-                  className="w-full justify-start bg-blue-50/50 border-blue-200 
-                           hover:bg-blue-100 hover:border-blue-300 transition-all duration-200"
+                  className="h-auto py-3 px-4 justify-start bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100 
+                           hover:from-blue-100 hover:to-indigo-100 hover:border-blue-200 transition-all duration-200 group"
                 >
-                  <Home className="h-4 w-4 mr-2 text-blue-600" />
-                  返回首页
+                  <div className="bg-white p-2 rounded-full shadow-sm mr-3 group-hover:scale-110 transition-transform">
+                    <Home className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div className="flex flex-col items-start">
+                    <span className="text-sm font-semibold text-gray-700">返回首页</span>
+                    <span className="text-xs text-gray-500">回到系统主页</span>
+                  </div>
                 </Button>
-              </div>
 
-              {/* 返回课程页面快捷导航 */}
-              <div className="space-y-2">
                 <Button
                   onClick={() => {
                     window.location.href = `/courses/${courseUuid}`;
                   }}
                   variant="outline"
-                  className="w-full justify-start bg-blue-50/50 border-blue-200 
-                           hover:bg-blue-100 hover:border-blue-300 transition-all duration-200"
+                  className="h-auto py-3 px-4 justify-start bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-100 
+                           hover:from-emerald-100 hover:to-teal-100 hover:border-emerald-200 transition-all duration-200 group"
                 >
-                  <BookOpen className="h-4 w-4 mr-2 text-blue-600" />
-                  返回课程页面
+                  <div className="bg-white p-2 rounded-full shadow-sm mr-3 group-hover:scale-110 transition-transform">
+                    <BookOpen className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <div className="flex flex-col items-start">
+                    <span className="text-sm font-semibold text-gray-700">返回课程</span>
+                    <span className="text-xs text-gray-500">查看课程详情</span>
+                  </div>
                 </Button>
               </div>
 
-            </div>
-          </TabsContent>
-
-          <TabsContent value="debug" className="space-y-4 overflow-y-auto flex-1 pr-2">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 mb-2">
-                <Bug className="h-4 w-4 text-orange-500" />
-                <h3 className="font-semibold text-gray-800">调试工具</h3>
-                <Badge variant="outline" className="text-xs text-orange-600 border-orange-200">
-                  开发者
-                </Badge>
-              </div>
-
-              <div className="bg-orange-50/50 rounded-lg p-3 border border-orange-200/50 space-y-3">
-                
-                {/* 存储操作 */}
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                      <Trash2 className="h-3 w-3 text-red-500" />
-                      <span className="text-xs text-gray-600">存储操作</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-
-                      <Button
-                        onClick={handleClearHistory}
-                        disabled={isChatHistoryLoading}
-                        variant="outline"
-                        size="sm"
-                        className="bg-red-50 border-red-200 text-red-600 
-                                 hover:bg-red-100 hover:border-red-300 
-                                 disabled:opacity-50 transition-all duration-200"
+              {/* 重启本节课 */}
+              <div className="pt-2">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start bg-red-50 border-red-100 
+                               hover:bg-red-100 hover:border-red-200 text-red-600 transition-all duration-200 group h-auto py-3"
+                    >
+                      <div className="bg-white p-2 rounded-full shadow-sm mr-3 group-hover:scale-110 transition-transform">
+                        <RotateCcw className="h-4 w-4 text-red-500" />
+                      </div>
+                      <div className="flex flex-col items-start">
+                        <span className="text-sm font-semibold">重启本节课</span>
+                        <span className="text-xs text-red-400/80">清除所有进度重新开始</span>
+                      </div>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>确认重启本节课？</AlertDialogTitle>
+                      <AlertDialogDescription className="text-red-600 font-medium">
+                        重启后本节课的进度、宝石、聊天记录等数据全部丢失，是否确认？
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>取消</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleRestartLesson}
+                        className="bg-red-600 hover:bg-red-700 text-white"
                       >
-                        {isChatHistoryLoading ? (
-                          <>
-                            <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                            清除中...
-                          </>
-                        ) : (
-                          <>
-                            <Trash2 className="h-3 w-3 mr-2" />
-                            清除记录
-                          </>
-                        )}
-                      </Button>
-                  </div>
-                </div>
-
+                        确认重启
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
+
             </div>
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -101,13 +101,13 @@ const ModelConfigTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-medium">模型管理</h2>
           <p className="text-sm text-muted-foreground">管理AI助教模型、头像及语音配置</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative w-64">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <div className="relative w-full sm:w-64">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="搜索模型..." 
@@ -116,7 +116,7 @@ const ModelConfigTab: React.FC = () => {
               className="pl-8"
             />
           </div>
-          <Button onClick={handleCreate}>
+          <Button onClick={handleCreate} className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             新建模型
           </Button>
@@ -329,21 +329,13 @@ const BasicInfoForm: React.FC<{
         />
       </div>
 
-      <div className="grid gap-2">
-        <Label>描述</Label>
-        <Textarea 
-          value={formData.description} 
-          onChange={e => setFormData({...formData, description: e.target.value})} 
-          placeholder="简短的描述..."
-        />
-      </div>
 
       <div className="grid gap-2">
         <Label>人设 (Prompt)</Label>
         <Textarea 
           value={formData.personality} 
           onChange={e => setFormData({...formData, personality: e.target.value})} 
-          placeholder="定义模型的性格、语气和行为模式..."
+          placeholder="定义模型的性格、语气和行为模式，推荐10字之内..."
           className="min-h-[100px]"
         />
       </div>

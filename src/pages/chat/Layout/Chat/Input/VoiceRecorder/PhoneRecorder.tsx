@@ -448,7 +448,7 @@ export const PhoneRecorder: React.FC<PhoneRecorderProps> = ({
       {/* 1. 实时文本气泡 - 微信风格 (屏幕居中) - 使用 Portal 确保脱离父容器限制 */}
       {(isRecordingUI || isProcessing) && createPortal(
         <div className="fixed inset-0 z-[40] flex items-center justify-center pointer-events-none bg-black/20 backdrop-blur-[1px]">
-          <div className="bg-[#95EC69] text-black px-6 py-4 rounded-2xl shadow-xl max-w-[80%] min-w-[120px] min-h-[100px] flex items-center justify-center relative animate-in zoom-in-95 duration-200 z-[50]">
+          <div className="bg-[#95EC69] text-black px-6 py-4 rounded-2xl shadow-xl max-w-[80%] min-w-[120px] min-h-[100px] flex items-center justify-center relative animate-in zoom-in-95 duration-200">
             {isProcessing ? (
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="w-6 h-6 animate-spin text-black/60" />

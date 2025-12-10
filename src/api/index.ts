@@ -8,8 +8,8 @@ import * as auth from "@/api/auth.ts";
 import * as image from "@/api/image.ts";
 import * as reward from "@/api/reward.ts";
 import * as teacher from "@/api/teacher.ts";
-import * as promptTemplate from "@/api/promptTemplate.ts";
 import * as mindmap from "@/api/mindmap.ts";
+import * as promptConfig from "@/api/promptConfig.ts";
 
 export const api = {
   ...lesson,
@@ -22,7 +22,7 @@ export const api = {
   ...image,
   ...reward,
   ...teacher,
-  ...promptTemplate,
+  ...promptConfig,
   ...mindmap,
 };
 

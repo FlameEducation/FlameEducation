@@ -77,7 +77,7 @@ export const ExerciseModal: React.FC = () => {
                 damping: 20,
                 stiffness: 280 
               }}
-              className={`relative w-[95vw] ${isProgrammingExercise ? 'h-[90vh]' : 'max-h-[90vh]'} bg-white rounded-xl 
+              className={`relative w-[95vw] ${isProgrammingExercise ? 'h-[90vh]' : 'h-[85vh]'} bg-white rounded-xl 
                         shadow-2xl border border-gray-200 flex flex-col overflow-hidden`}
               onClick={(e) => e.stopPropagation()}
             >
@@ -93,7 +93,7 @@ export const ExerciseModal: React.FC = () => {
               </button>
 
               {/* 练习题内容 */}
-              <div className={`flex-1 overflow-hidden ${isProgrammingExercise ? 'flex flex-col min-h-0' : ''}`}>
+              <div className="flex-1 overflow-hidden flex flex-col min-h-0">
                 <UnifiedExerciseComponent
                   exerciseId={rightPanelExerciseId}
                   onComplete={handleComplete}

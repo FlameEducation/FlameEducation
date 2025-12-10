@@ -3,7 +3,6 @@ import { MultipleChoiceExerciseComponent } from './commonExercise/MultipleChoice
 import { SingleChoiceExerciseComponent } from './commonExercise/SingleChoiceExercise.tsx';
 import { FillBlankExerciseComponent } from './commonExercise/FillBlankExercise.tsx';
 import { TrueFalseExerciseComponent } from './commonExercise/TrueFalseExercise.tsx';
-import { ProgrammingExercise } from './codeExercise/ProgrammingExercise.tsx';
 import { useExerciseContext } from '../context/ExerciseContext.tsx';
 
 // 练习题Props接口
@@ -75,13 +74,13 @@ export const UnifiedExerciseComponent: React.FC<ExerciseProps> = ({
           />
         );
 
-      case 'programming':
-        return (
-          <ProgrammingExercise
-            exerciseData={exerciseData as any}
-            onSubmitComplete={onComplete}
-          />
-        );
+      // case 'programming':
+      //   return (
+      //     <ProgrammingExercise
+      //       exerciseData={exerciseData as any}
+      //       onSubmitComplete={onComplete}
+      //     />
+      //   );
 
       default:
         return (

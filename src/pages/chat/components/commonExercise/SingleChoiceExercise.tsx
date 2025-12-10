@@ -102,8 +102,8 @@ export const SingleChoiceExerciseComponent: React.FC<SingleChoiceExerciseProps> 
 
   return (
     <div className="h-full flex flex-col bg-white">
-      {/* 顶部标题区 */}
-      <div className="px-5 py-3 sm:px-8 sm:py-4 bg-green-50 flex-shrink-0">
+      {/* 顶部标题区 - 增加右侧padding防止被关闭按钮遮挡 */}
+      <div className="px-5 py-3 sm:px-8 sm:py-4 pr-12 bg-green-50 flex-shrink-0">
         <h2 className="text-lg sm:text-xl font-bold text-green-900">{exerciseData.title}</h2>
       </div>
 

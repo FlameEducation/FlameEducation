@@ -9,8 +9,7 @@ import { Loader2, CheckCircle2, ChevronRight, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ImageProviderConfig, CreateImageProviderConfig } from '@/api/image-config';
-import * as promptTemplateApi from '@/api/promptTemplate';
-import { PromptTemplate } from '@/api/promptTemplate';
+import {listPromptTemplates, PromptTemplate} from "@/api/promptConfig";
 
 interface ImageProviderDialogProps {
   open: boolean;
@@ -86,13 +85,11 @@ const ImageProviderDialog: React.FC<ImageProviderDialogProps> = ({
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
-        const res = await promptTemplateApi.listPromptTemplates({
-          page: 1,
-          pageSize: 100,
+        const res = await listPromptTemplates({
           templateType: 'IMAGE_PROMPT_OPTIMIZATION'
         });
-        // @ts-ignore
-        setTemplates(res.list || res || []);
+        console.log('Fetched templates:', res);
+        setTemplates(res || []);
       } catch (error) {
         console.error('Failed to fetch templates:', error);
       }
@@ -135,7 +132,7 @@ const ImageProviderDialog: React.FC<ImageProviderDialogProps> = ({
   const handleProviderSelect = (code: string) => {
     let defaultModel = '';
     let defaultSize = '';
-    
+
     if (code === 'siliconflow') {
       defaultModel = 'black-forest-labs/FLUX.1-schnell';
       defaultSize = '1024x576';
@@ -427,7 +424,7 @@ const ImageProviderDialog: React.FC<ImageProviderDialogProps> = ({
             onCheckedChange={(checked) => setFormData(prev => ({ ...prev, enablePromptOptimization: checked }))}
           />
         </div>
-        
+
         {formData.enablePromptOptimization && (
           <div className="space-y-1.5">
             <Label className="text-sm">优化模板</Label>
@@ -439,7 +436,8 @@ const ImageProviderDialog: React.FC<ImageProviderDialogProps> = ({
                 <SelectValue placeholder="选择优化模板" />
               </SelectTrigger>
               <SelectContent>
-                {templates.map(t => (
+                {templates.filter(t => t.isEnabled)
+                .map(t => (
                   <SelectItem key={t.uuid} value={t.uuid}>
                     {t.templateName}
                   </SelectItem>
@@ -515,17 +513,17 @@ const ImageProviderDialog: React.FC<ImageProviderDialogProps> = ({
             上一步
           </Button>
           <div className="text-xs text-slate-600">
-            {mode === 'edit' 
+            {mode === 'edit'
               ? `编辑配置`
               : `第 ${currentStep} / 2 步`
             }
           </div>
           {currentStep < 2 ? (
-            <Button 
-              size="sm" 
-              onClick={handleNextStep} 
+            <Button
+              size="sm"
+              onClick={handleNextStep}
               disabled={
-                saving || 
+                saving ||
                 (currentStep === 1 && !formData.providerName)
               }
             >

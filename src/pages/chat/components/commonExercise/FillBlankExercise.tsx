@@ -38,16 +38,39 @@ export const FillBlankExerciseComponent: React.FC<FillBlankExerciseProps> = ({
 
   // 解析题目中的空格占位符 - 格式为 ${0}, ${1}, ${2}...
   const question = exerciseData.question || '';
-  const blankPattern = /\$\{(\d+)\}/g;
-  const blanks = Array.from(question.matchAll(blankPattern));
-  const blankCount = blanks.length;
+  
+  // 使用 useMemo 缓存 blankCount，避免重复计算
+  const blankCount = React.useMemo(() => {
+    const blankPattern = /\$\{(\d+)\}/g;
+    const matches = Array.from(question.matchAll(blankPattern));
+    return matches.length;
+  }, [question]);
 
   const [blankAnswers, setBlankAnswers] = useState<string[]>(() => {
     if (isCompleted && userAnswer.length > 0) {
       return userAnswer;
     }
-    return new Array(blankCount).fill('');
+    // 初始状态可能 question 还没加载完，blankCount 为 0
+    return blankCount > 0 ? new Array(blankCount).fill('') : [];
   });
+
+  // 监听 blankCount 变化，动态调整 blankAnswers
+  useEffect(() => {
+    if (!isCompleted) {
+      setBlankAnswers(prev => {
+        // 如果长度一致，保持原样（避免重置用户输入）
+        if (prev.length === blankCount) return prev;
+        
+        // 如果长度不一致（通常是数据加载完成了），重新初始化
+        // 尝试保留已有的输入
+        const newAnswers = new Array(blankCount).fill('');
+        prev.forEach((val, idx) => {
+          if (idx < blankCount) newAnswers[idx] = val;
+        });
+        return newAnswers;
+      });
+    }
+  }, [blankCount, isCompleted]);
 
   // 同步外部答案
   useEffect(() => {
@@ -66,7 +89,8 @@ export const FillBlankExerciseComponent: React.FC<FillBlankExerciseProps> = ({
 
   // 提交答案
   const handleSubmit = useCallback(async () => {
-    if (blankAnswers.some(ans => !ans.trim()) || isCompleted || isSubmitting) return;
+    // 增加 blankCount > 0 的检查，防止空题目提交
+    if (blankCount === 0 || blankAnswers.some(ans => !ans.trim()) || isCompleted || isSubmitting) return;
     
     setIsSubmitting(true);
     try {
@@ -180,7 +204,7 @@ export const FillBlankExerciseComponent: React.FC<FillBlankExerciseProps> = ({
     <div className="h-full flex flex-col bg-white">
       {/* 顶部标题区 */}
       <div className="px-5 py-3 sm:px-8 sm:py-4 bg-purple-50 flex-shrink-0">
-        <h2 className="text-lg sm:text-xl font-bold text-purple-900">{exerciseData.title}</h2>
+        <h2 className="text-lg sm:text-xl font-bold text-purple-900 pr-12">{exerciseData.title}</h2>
       </div>
 
       {/* 中间内容区 */}

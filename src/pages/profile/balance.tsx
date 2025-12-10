@@ -130,9 +130,6 @@ const BalanceDetailPage: React.FC = () => {
               <div className="text-3xl font-bold">
                 {userInfo?.balance || 0} 💎
               </div>
-              <p className="text-white/60 text-sm mt-1">
-                宝石可用于解锁高级功能和课程（暂时还没用嘿嘿）
-              </p>
             </div>
           </Card>
         </div>
@@ -197,7 +194,7 @@ const BalanceDetailPage: React.FC = () => {
               <div>
                 <h4 className="font-medium text-blue-800 mb-1">关于宝石</h4>
                 <p className="text-sm text-blue-600">
-                  通过完成课程学习、参与活动等方式可以获得宝石奖励。宝石可用于解锁更多学习内容和功能。
+                  通过完成课程学习、参与活动等方式可以获得宝石奖励。宝石可用于解锁更多学习内容和功能。更多功能后续推出。
                 </p>
               </div>
             </div>

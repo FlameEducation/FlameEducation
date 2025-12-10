@@ -42,23 +42,8 @@ export const ExerciseDisplayComponent: React.FC = () => {
         }}
         className="w-full h-full bg-white flex flex-col"
       >
-        {/* 头部 */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
-            {rightPanelExercise.questionData?.title || '练习题'}
-          </h2>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleClose}
-            className="h-8 w-8 p-0 hover:scale-105 transition-transform"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-
         {/* 练习题内容 */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto pt-4">
           <UnifiedExerciseComponent
             exerciseId={rightPanelExerciseId}
             onComplete={handleUnifiedComplete}

@@ -44,10 +44,13 @@ import {
   FileText,
   Settings,
   Layers,
+  Download,
+  Upload,
 } from 'lucide-react';
 import * as adminCourseApi from '@/api/admin-course';
 import type { CourseData, CourseStats, PromptTemplate, CoursePromptBinding, CourseToolStatus } from '@/api/admin-course';
 import CurriculumEditor from './components/CurriculumEditor';
+import {listPromptTemplates} from "@/api/promptConfig";
 
 const AdminCoursesPage: React.FC = () => {
   const { toast } = useToast();
@@ -92,7 +95,7 @@ const AdminCoursesPage: React.FC = () => {
       setStats(statsData);
       
       // 加载 Prompt 模板列表
-      const templates = await adminCourseApi.getPromptTemplates();
+      const templates = await listPromptTemplates({});
       setPromptTemplates(templates);
       
       // 加载课程列表
@@ -395,21 +398,69 @@ const AdminCoursesPage: React.FC = () => {
     }
   };
 
+  const handleExport = (uuid: string, title: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      let exportUrl = `/api/admin/course/export?uuid=${uuid}`;
+      if (token) {
+        exportUrl += `&token=${encodeURIComponent(token)}`;
+      }
+      window.open(exportUrl, '_blank');
+
+      toast({
+        title: "导出请求已发送",
+        description: "如果下载没有开始，请检查浏览器拦截设置"
+      });
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast({
+        variant: "destructive",
+        title: "导出失败",
+        description: "无法导出课程"
+      });
+    }
+  };
+
+  const handleImportClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.data';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      
+      try {
+        setLoading(true);
+        await adminCourseApi.importCourse(file);
+        toast({
+          title: "导入成功",
+          description: "课程已成功导入"
+        });
+        loadData();
+      } catch (error: any) {
+        console.error('Import failed:', error);
+        toast({
+          variant: "destructive",
+          title: "导入失败",
+          description: error?.message || "无法导入课程"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    input.click();
+  };
+
   return (
 
     <SettingsLayout
       title="课程管理"
       description="管理课程，支持添加、编辑和删除课程。"
     >     
-
-
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
-
-      {/* 主内容 */}
-      <div className="container mx-auto px-4 py-6 md:py-8">
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* 统计卡片 */}
         {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             <Card className="p-4 md:p-6 bg-gradient-to-br from-blue-50 to-white border-blue-100">
               <div className="flex items-start md:items-center justify-between">
                 <div className="min-w-0">
@@ -465,17 +516,21 @@ const AdminCoursesPage: React.FC = () => {
           {/* 标题和排序控件 */}
           <div className="mb-4 space-y-3 md:space-y-0 md:flex md:items-center md:justify-between">
             <h2 className="text-lg font-bold text-slate-800">课程列表</h2>
-            <div className="flex items-center gap-2 text-sm">
-              <Button onClick={handleCreate} size="sm" className="gap-1 bg-blue-600 hover:bg-blue-700 text-white">
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <Button onClick={handleCreate} size="sm" className="gap-1 bg-blue-600 hover:bg-blue-700 text-white flex-1 md:flex-none">
                 <Plus className="w-4 h-4" />
                 新建课程
+              </Button>
+              <Button onClick={handleImportClick} size="sm" variant="outline" className="gap-1 flex-1 md:flex-none">
+                <Upload className="w-4 h-4" />
+                导入课程
               </Button>
               
               <div className="w-px h-4 bg-slate-200 mx-2 hidden md:block" />
 
               <span className="text-slate-600 whitespace-nowrap hidden md:inline">排序：</span>
               <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-                <SelectTrigger className="h-8 text-xs md:text-sm md:w-40">
+                <SelectTrigger className="h-8 text-xs md:text-sm w-full md:w-40 flex-1 md:flex-none">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -507,10 +562,10 @@ const AdminCoursesPage: React.FC = () => {
                 return (
                   <div
                     key={course.uuid}
-                    className="bg-white border rounded-xl hover:shadow-md transition-all p-4 flex gap-4"
+                    className="bg-white border rounded-xl hover:shadow-md transition-all p-4 flex flex-col md:flex-row gap-4"
                   >
                     {/* 左侧：封面图 */}
-                    <div className="w-40 h-28 rounded-lg bg-slate-100 flex-shrink-0 overflow-hidden border border-slate-200 relative group self-start">
+                    <div className="w-full h-48 md:w-40 md:h-28 rounded-lg bg-slate-100 flex-shrink-0 overflow-hidden border border-slate-200 relative group self-start">
                         {course.coverImageUrl ? (
                           <img src={course.coverImageUrl} alt={course.title} className="w-full h-full object-cover" />
                         ) : (
@@ -524,20 +579,20 @@ const AdminCoursesPage: React.FC = () => {
                     <div className="flex-1 min-w-0 flex flex-col gap-3">
                         {/* 第一行：标题、状态、描述、操作按钮 */}
                         <div className="flex justify-between items-start gap-2">
-                            <div className="space-y-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                    <h3 className="font-bold text-slate-800 text-base truncate">
+                            <div className="space-y-1 min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <h3 className="font-bold text-slate-800 text-base truncate max-w-full">
                                         {course.title}
                                     </h3>
                                     <Badge 
                                         variant={course.status === 1 ? 'default' : 'secondary'}
-                                        className="cursor-pointer hover:opacity-80 transition-opacity h-5 text-xs px-1.5"
+                                        className="cursor-pointer hover:opacity-80 transition-opacity h-5 text-xs px-1.5 flex-shrink-0"
                                         onClick={() => handleToggleStatus(course.uuid!, course.status || 0)}
                                     >
                                         {course.status === 1 ? '已发布' : '草稿'}
                                     </Badge>
                                 </div>
-                                <p className="text-sm text-slate-500 line-clamp-1">
+                                <p className="text-sm text-slate-500 line-clamp-2 md:line-clamp-1">
                                     {course.description || '暂无描述'}
                                 </p>
                             </div>
@@ -546,20 +601,29 @@ const AdminCoursesPage: React.FC = () => {
                                 <Button
                                   variant="ghost"
                                   size="icon"
+                                  onClick={() => handleExport(course.uuid!, course.title)}
+                                  className="h-8 w-8 md:h-7 md:w-7 text-slate-500 hover:text-green-600"
+                                  title="导出课程"
+                                >
+                                  <Download className="w-4 h-4 md:w-3.5 md:h-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   onClick={() => handleEdit(course.uuid!)}
-                                  className="h-7 w-7 text-slate-500 hover:text-blue-600"
+                                  className="h-8 w-8 md:h-7 md:w-7 text-slate-500 hover:text-blue-600"
                                   title="编辑课程"
                                 >
-                                  <Pencil className="w-3.5 h-3.5" />
+                                  <Pencil className="w-4 h-4 md:w-3.5 md:h-3.5" />
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => handleDelete(course.uuid!)}
-                                  className="h-7 w-7 text-slate-500 hover:text-red-600"
+                                  className="h-8 w-8 md:h-7 md:w-7 text-slate-500 hover:text-red-600"
                                   title="删除课程"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <Trash2 className="w-4 h-4 md:w-3.5 md:h-3.5" />
                                 </Button>
                             </div>
                         </div>
@@ -577,9 +641,9 @@ const AdminCoursesPage: React.FC = () => {
                                 </div>
                             </div>
                             
-                            <div className="w-px h-3 bg-slate-200" />
+                            <div className="w-px h-3 bg-slate-200 hidden md:block" />
 
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 w-full md:w-auto">
                                 {/* Prompt 状态 */}
                                 <div className="flex items-center gap-1.5">
                                     <span className="text-xs text-slate-500">Prompt:</span>
@@ -604,10 +668,10 @@ const AdminCoursesPage: React.FC = () => {
                         </div>
 
                         {/* 第三行：配置按钮 */}
-                        <div className="flex items-center gap-2 pt-1">
+                        <div className="flex flex-wrap items-center gap-2 pt-1">
                              <Popover>
                                 <PopoverTrigger asChild>
-                                  <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5 px-2">
+                                  <Button variant="outline" size="sm" className="h-8 md:h-7 text-xs gap-1.5 px-3 md:px-2 flex-1 md:flex-none">
                                     <Wrench className="w-3 h-3" />
                                     配置工具
                                   </Button>
@@ -646,7 +710,7 @@ const AdminCoursesPage: React.FC = () => {
 
                              <Popover>
                                 <PopoverTrigger asChild>
-                                  <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5 px-2">
+                                  <Button variant="outline" size="sm" className="h-8 md:h-7 text-xs gap-1.5 px-3 md:px-2 flex-1 md:flex-none">
                                     <Settings className="w-3 h-3" />
                                     配置 Prompt
                                   </Button>
@@ -671,7 +735,7 @@ const AdminCoursesPage: React.FC = () => {
                                         <SelectContent>
                                           <SelectItem value="none">不绑定</SelectItem>
                                           {promptTemplates
-                                            .filter(t => (t.templateType === 'CHAT' || t.sceneType === 'CHAT'))
+                                            .filter(t => (t.templateType === 'CHAT' && t.isEnabled === true))
                                             .map(template => (
                                               <SelectItem key={template.uuid || template.sceneUuid} value={template.uuid || template.sceneUuid || ''}>
                                                 {template.templateName || template.promptName || template.name || template.aiModelName}
@@ -697,7 +761,7 @@ const AdminCoursesPage: React.FC = () => {
                                         <SelectContent>
                                           <SelectItem value="none">不绑定</SelectItem>
                                           {promptTemplates
-                                            .filter(t => (t.templateType === 'BLACKBOARD' || t.sceneType === 'BLACKBOARD'))
+                                            .filter(t => (t.templateType === 'BLACKBOARD' && t.isEnabled === true))
                                             .map(template => (
                                               <SelectItem key={template.uuid || template.sceneUuid} value={template.uuid || template.sceneUuid || ''}>
                                                 {template.templateName || template.promptName || template.name || template.aiModelName}
@@ -710,9 +774,9 @@ const AdminCoursesPage: React.FC = () => {
                                 </PopoverContent>
                              </Popover>
                              
-                             <div className="flex-1" />
+                             <div className="flex-1 hidden md:block" />
                              
-                             <div className="flex items-center gap-2">
+                             <div className="flex items-center justify-end gap-2 w-full md:w-auto mt-2 md:mt-0">
                                 <span className="text-xs text-slate-500">
                                   {course.status === 1 ? '已发布' : '未发布'}
                                 </span>
@@ -830,8 +894,6 @@ const AdminCoursesPage: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
-
     </SettingsLayout>
   );
 };

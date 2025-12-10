@@ -1,4 +1,10 @@
 <div align="center">
+  <a href="https://github.com/FlameEducation/FlameEducation">
+    <img src="https://img.shields.io/badge/GitHub-FlameEducation-181717?logo=github" alt="GitHub" />
+  </a>
+</div>
+
+<div align="center">
   <img src="logo.png" alt="Flame Education Logo" width="180" />
   <h1>🔥 篝火学 (Flame Education)</h1>
   
@@ -86,13 +92,14 @@ We are committed to integrating the world's most advanced AI models to provide y
 
 ### 🧠 大语言模型 (LLM)
 
-| 服务商 (Provider) | 是否支持 (Supported) |
-| :--- | :--- |
-| **Google Gemini** | ✅ |
-| **字节跳动豆包 (Doubao)** | ✅ |
-| **OpenAI (GPT-4)** | ❌ (Planned) |
+| 服务商 (Provider)         | 是否支持 (Supported) |
+|:-----------------------| :--- |
+| **Google Gemini**      | ✅ |
+| **字节跳动豆包 (Doubao)**    | ✅ |
+| **OpenAI (GPT)**       | ✅ |
+| **OneApi**             | ✅ |
 | **Anthropic (Claude)** | ❌ (Planned) |
-| **DeepSeek** | ❌ (Planned) |
+| **DeepSeek**           | ❌ (Planned) |
 
 ### 🗣️ 语音识别 (ASR)
 
@@ -190,14 +197,35 @@ If you just want to quickly experience the full features of Flame Education with
 ```bash
 # 拉取并运行完整镜像 (包含前端 + 后端)
 # Pull and run the complete image (Frontend + Backend)
-# 注意：请将 <your-image-name> 替换为实际发布的镜像名称
-# Note: Please replace <your-image-name> with the actual published image name
 docker run -d \
   --name flame-education \
-  -p 80:80 \
-  -p 8080:8080 \
-  flame-education:latest
+  -p 8080:80 \
+  -v /your/host/storage/path:/app/storage \
+  -e PG_DB=flame-education \
+  -e PG_HOST=127.0.0.1 \
+  -e PG_PASSWORD=passwd \
+  -e PG_PORT=5432 \
+  -e PG_USERNAME=flame-education \
+  -e STORAGE_DIR=/app/storage \
+  flameeducation/flame-education:latest
 ```
+
+### 环境变量说明 (Environment Variables)
+
+| 变量名 (Variable) | 默认值 (Default) | 说明 (Description) |
+|:-----------------|:-----------------|:-------------------|
+| `PG_DB` | `flame-education` | PostgreSQL 数据库名 (PostgreSQL database name) |
+| `PG_HOST` | `127.0.0.1` | PostgreSQL 服务器地址 (PostgreSQL server address) |
+| `PG_PASSWORD` | `passwd` | PostgreSQL 密码 (PostgreSQL password) |
+| `PG_PORT` | `5432` | PostgreSQL 端口 (PostgreSQL port) |
+| `PG_USERNAME` | `flame-education` | PostgreSQL 用户名 (PostgreSQL username) |
+| `STORAGE_DIR` | `/app/storage` | 存储目录路径 (Storage directory path) |
+
+**注意 (Note)**: 请根据您的实际环境修改这些环境变量值。容器内部使用 `/app/storage` 作为存储目录映射。
+
+**存储目录绑定推荐 (Storage Directory Binding Recommendation)**: 为防止因容器重建导致的数据丢失，强烈推荐将 `STORAGE_DIR` 对应的容器目录 `/app/storage` 与宿主机目录进行绑定挂载。例如，使用 `-v /your/host/storage/path:/app/storage` 参数。这样，即使容器被删除，数据仍保存在宿主机上。
+
+**Storage Directory Binding Recommendation**: To prevent data loss due to container reconstruction, it is strongly recommended to bind-mount the container directory `/app/storage` corresponding to `STORAGE_DIR` with the host directory. For example, use the `-v /your/host/storage/path:/app/storage` parameter. This way, even if the container is deleted, the data remains on the host.
 
 启动后，访问 `http://localhost` 即可开始学习！
 After startup, visit `http://localhost` to start learning!
@@ -216,9 +244,6 @@ If you want to participate in frontend development or customize the UI, please f
 #### 2. 安装依赖 (Install Dependencies)
 
 ```bash
-# 进入前端目录 / Enter frontend directory
-cd FrontEnd
-
 # 安装依赖 / Install dependencies
 npm install
 ```

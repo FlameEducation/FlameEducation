@@ -5,6 +5,7 @@ import ReactCode from '@/components/sendbox/ReactCode.tsx';
 import {cn} from '@/lib/utils.ts';
 import api from '@/api/index.ts';
 import {useClassStatusContext} from "@/pages/chat/context/ClassStatusContext.tsx";
+import {useBlackboardContext} from "@/pages/chat/context/BlackboardContext.tsx";
 
 interface BlackboardContent {
   uuid: string;
@@ -43,9 +44,13 @@ export const DynamicComponentRenderer: React.FC<DynamicComponentRendererProps> =
   isRegenerating = false,
   onRegenerateStateChange
 }) => {
-  const [content, setContent] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { getBlackboardState, loadBlackboard, regenerateBlackboard } = useBlackboardContext();
+  const blackboardState = getBlackboardState(blackboardUuid);
+  
+  const content = blackboardState?.content || null;
+  const isLoading = !blackboardState || blackboardState.isLoading;
+  const error = blackboardState?.error ? (blackboardState.errorMessage || '加载失败') : null;
+  
   const [isLocalRegenerating, setIsLocalRegenerating] = useState(false);
   
   const {
@@ -55,63 +60,12 @@ export const DynamicComponentRenderer: React.FC<DynamicComponentRendererProps> =
   } = useClassStatusContext();
   
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastRegenerateTimeRef = useRef<number>(0);
 
-  // 获取小黑板内容
-  const fetchContent = useCallback(async () => {
-    try {
-      const response = await api.getBlackboardContent(blackboardUuid) as BlackboardContent;
-
-      if (response.error) {
-        setError('内容生成失败');
-        setIsLoading(false);
-        return false;
-      }
-
-      if (response.over && response.content) {
-        setContent(response.content);
-        setIsLoading(false);
-        return false;
-      }
-
-      return true; // 继续轮询
-    } catch (error) {
-      console.error('获取小黑板内容失败:', error);
-      setError('获取内容失败');
-      setIsLoading(false);
-      return false;
-    }
-  }, [sessionId, blackboardUuid]);
-
-  // 开始轮询
-  const startPolling = useCallback(() => {
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
-    }
-    
-    setIsLoading(true);
-    setError(null);
-    setContent(null);
-    
-    pollingIntervalRef.current = setInterval(() => {
-      fetchContent().then(shouldContinue => {
-        if (!shouldContinue && pollingIntervalRef.current) {
-          clearInterval(pollingIntervalRef.current);
-          pollingIntervalRef.current = null;
-        }
-      });
-    }, 2000);
-    fetchContent()
-  }, [fetchContent]);
-
-  // 停止轮询
-  const stopPolling = useCallback(() => {
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
-      pollingIntervalRef.current = null;
-    }
-  }, []);
+  // 初始化加载
+  useEffect(() => {
+    loadBlackboard(blackboardUuid);
+  }, [blackboardUuid, loadBlackboard]);
 
   // 重新生成
   const handleRegenerate = useCallback(async () => {
@@ -121,15 +75,13 @@ export const DynamicComponentRenderer: React.FC<DynamicComponentRendererProps> =
       setIsLocalRegenerating(true);
       onRegenerateStateChange?.(true);
       await regenerateBlackboard(blackboardUuid);
-      startPolling();
     } catch (error) {
       console.error('重新生成失败:', error);
-      setError('重新生成失败');
     } finally {
       setIsLocalRegenerating(false);
       onRegenerateStateChange?.(false);
     }
-  }, [sessionId, blackboardUuid, startPolling, isLocalRegenerating, onRegenerateStateChange]);
+  }, [blackboardUuid, regenerateBlackboard, isLocalRegenerating, onRegenerateStateChange]);
 
   // 发送消息到 iframe
   const sendCodeToIframe = useCallback(() => {
@@ -145,11 +97,11 @@ export const DynamicComponentRenderer: React.FC<DynamicComponentRendererProps> =
     }
   }, [content, courseUuid, chapterUuid, lessonUuid, blackboardUuid]);
 
-  // 初始化轮询
-  useEffect(() => {
-    startPolling();
-    return stopPolling;
-  }, [startPolling, stopPolling]);
+  // 初始化轮询 - 已由Context接管
+  // useEffect(() => {
+  //   startPolling();
+  //   return stopPolling;
+  // }, [startPolling, stopPolling]);
 
   // 监听外部重新生成状态
   useEffect(() => {
@@ -165,6 +117,10 @@ export const DynamicComponentRenderer: React.FC<DynamicComponentRendererProps> =
         sendCodeToIframe();
       } else if (event.data?.type === 'CODE_ERROR' && 
                  event.data?.blackboardUuid === blackboardUuid) {
+
+                // 打印错误信息
+        console.error('Iframe 代码执行错误:', event.data);
+
         // 收到代码错误，自动重新生成（添加防抖，避免频繁重新生成）
         const now = Date.now();
         if (now - lastRegenerateTimeRef.current > 5000) { // 5秒内只重新生成一次
@@ -184,6 +140,13 @@ export const DynamicComponentRenderer: React.FC<DynamicComponentRendererProps> =
     sendCodeToIframe();
   }, [sendCodeToIframe]);
 
+  // 监听外部重新生成状态
+  useEffect(() => {
+    if (isRegenerating) {
+      handleRegenerate().catch(console.error);
+    }
+  }, [isRegenerating, handleRegenerate]);
+
   if (isLoading) {
     return (
       <div className={cn(
@@ -191,7 +154,7 @@ export const DynamicComponentRenderer: React.FC<DynamicComponentRendererProps> =
         containerClassName
       )}>
         <div
-          className="absolute inset-0 bg-white bg-opacity-80 backdrop-blur-sm flex flex-col items-center justify-center gap-4 z-50">
+          className="absolute inset-0 bg-white bg-opacity-80 backdrop-blur-sm flex flex-col items-center justify-center gap-4">
           <div className="relative">
             <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"/>
             <div className="absolute inset-0 flex items-center justify-center">
@@ -200,8 +163,8 @@ export const DynamicComponentRenderer: React.FC<DynamicComponentRendererProps> =
             </div>
           </div>
           <div className="text-center space-y-2">
-            <h3 className="text-lg font-semibold text-gray-800">课程内容准备中</h3>
-            <p className="text-sm text-gray-500">老师正在为你准备精彩的互动示例...</p>
+            <h3 className="text-lg font-semibold text-gray-800">小黑板书写中</h3>
+            <p className="text-sm text-gray-500">粉笔都快被老师用光啦，请耐心等待哦~</p>
           </div>
         </div>
       </div>
@@ -229,7 +192,7 @@ export const DynamicComponentRenderer: React.FC<DynamicComponentRendererProps> =
             />
           </svg>
           <h3 className="text-lg font-semibold text-red-700 mb-2">加载遇到问题</h3>
-          <p className="text-sm text-red-600 text-center">抱歉，课程示例加载失败了</p>
+          <p className="text-sm text-red-600 text-center">{error || '抱歉，课程示例加载失败了'}</p>
           <button
             onClick={handleRegenerate}
             className="mt-4 px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
@@ -247,7 +210,7 @@ export const DynamicComponentRenderer: React.FC<DynamicComponentRendererProps> =
         <button
           onClick={handleRegenerate}
           className={cn(
-            "absolute bottom-3 right-3 z-50",
+            "absolute bottom-3 right-3 z-50 md:hidden",
             "p-1.5 rounded-lg bg-white/90 hover:bg-white",
             "border border-gray-200 shadow-sm hover:shadow",
             "text-gray-500 hover:text-gray-700",

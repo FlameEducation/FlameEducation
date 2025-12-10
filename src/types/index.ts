@@ -5,6 +5,7 @@ export interface UserInfo {
     avatarUrl: string;
     balance: number;
     age?: number;
+    gender?: string;
 }
 
 // 收支明细类型
