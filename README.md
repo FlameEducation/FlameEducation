@@ -1,19 +1,16 @@
+<br>
+<br>
+<br>
 <div align="center">
-  <a href="https://github.com/FlameEducation/FlameEducation">
-    <img src="https://img.shields.io/badge/GitHub-FlameEducation-181717?logo=github" alt="GitHub" />
-  </a>
-</div>
-
-<div align="center">
-  <img src="logo.png" alt="Flame Education Logo" width="180" />
+  <img src="images/logo.png" alt="Flame Education Logo" width="160" />
   <h1>🔥 篝火学 (Flame Education)</h1>
-  
   <p>
-    <strong>点燃学习的火花，传承文明的薪火</strong><br>
-    <strong>Ignite the spark of learning, pass on the torch of civilization.</strong>
+    <strong>点燃学习的火花，传承文明的薪火</strong>
   </p>
-
   <p>
+      <a href="https://github.com/FlameEducation/FlameEducation">
+        <img src="https://img.shields.io/badge/GitHub-FlameEducation-181717?logo=github" alt="GitHub" />
+      </a>
     <a href="LICENSE">
       <img src="https://img.shields.io/badge/License-Personal%20Free%20%7C%20Non--Commercial-red.svg" alt="License" />
     </a>
@@ -34,251 +31,223 @@
 
 ---
 
-## 📖 项目介绍 (Introduction)
+## 📖 项目介绍
 
-### 🌟 愿景与故事 (Vision & Story)
+### 项目灵感
 
-**中文**
+项目灵感来自于流量地球中的火种计划：人类文明面临灭绝的危机，由储备胚胎发育而成的新人类们需要在新的星球上重建家园。
 
-如果有一天，人类文明遭遇了毁灭性的打击，幸存者们需要在新的土地上重建家园、繁衍后代。在那时，谁来担任他们的老师？谁来传承人类数千年积累的智慧？
+偶然一次，我开始思考如果真的发生这种情况，谁来教他们识字、教他们数学、讲述人类的历史与文化呢？
 
-这个老师可能不再是人类自己，而是**人工智能**。
+本项目**篝火学 (Flame Education)** 正是基于这样的思考下诞生的。火焰代表着人的文明与知识的传承，也代表着在黑暗中指引方向的光明。
 
-**篝火学 (Flame Education)** 正是基于这样一种人文情怀而诞生的。我们希望打造一个在极端环境下也能独立运行的智能教育系统。当人类面临教育资源匮乏的困境时，这个项目能够成为那堆永不熄灭的篝火，通过 AI 导师、语音交互和全息知识图谱，将知识高效、准确地传递给下一代。
+我希望利用现有的技术，能够实现将知识能够平等传授给每一个人的、有价值的教育工具。
 
-我们致力于通过现有的前沿技术，让知识的获取不再受限于师资和地域，让每一个人都能平等地接触到最优质的教育资源。
-
-**English**
-
-If one day human civilization faces a catastrophic event, and survivors need to rebuild their homes and repopulate on new lands, who will be their teacher? Who will pass down the wisdom accumulated by humanity over thousands of years?
-
-That teacher might no longer be human, but **Artificial Intelligence**.
-
-**Flame Education** was born from this humanistic vision. We aim to create an intelligent education system capable of operating independently even in extreme environments. When humanity faces a scarcity of educational resources, this project can serve as the unextinguished bonfire, passing down knowledge efficiently and accurately to the next generation through AI tutors, voice interaction, and holographic knowledge graphs.
-
-We are dedicated to using existing cutting-edge technology to ensure that knowledge acquisition is no longer limited by the availability of teachers or geography, allowing everyone equal access to the highest quality educational resources.
-
-### 🚀 核心模式 (Core Model)
-
-本项目采用 **前端开源 + 后端容器化交付** 的模式：
-*   **前端 (Frontend)**: 完全开源，透明可定制。
-*   **后端 (Backend)**: 核心服务封装在 Docker 容器中，免费供个人使用，开箱即用。
-
-**This project adopts a "Open Source Frontend + Containerized Backend" model:**
-*   **Frontend**: Fully open source, transparent, and customizable.
-*   **Backend**: Core services are encapsulated in Docker containers, free for personal use, and ready to use out of the box.
+无论是身处偏远地区的孩子，还是未来星际移民中的新人类，都能利用 AI 学习知识，激发人类智慧的火光。
 
 ---
 
-## ⚖️ 许可协议 (License)
+## ✨ 核心特性
+
+| 特性 | 描述 |
+|------|------|
+| 🤖 基于AI的全自动授课体系 | 融合大语言模型 (LLM)、语音识别 (ASR) 与语音合成 (TTS) 等前沿AI技术，实现课程生成、内容讲解至知识图谱构建的全流程自动化，让学习变得智能而高效。 |
+| 📚 智能课程生成 | 内置强大课程生成引擎，只需输入任意主题（如"量子力学"、"罗马历史"），AI瞬间生成完整课程大纲与丰富内容，开启个性化学习之旅。 |
+| 💬 实时语音交互 | 借助高精度语音识别与合成技术，支持打电话模式，让学习如同面对面对话般自然流畅，沉浸式体验AI教师的智慧指导。 |
+| 🧠 智能思维导图 | 实时解析对话内容，动态生成可视化知识图谱，帮助学生直观构建知识网络，深化理解与记忆。 |
+| 🎨 自由学习课 | 打破传统束缚，想学什么就生成什么课程，激发无限好奇心与探索欲，解锁个性化教育新维度。 |
+| 📱 移动端友好 | 响应式设计完美适配手机与平板，随时随地开启学习模式，让优质教育触手可及。 |
+
+---
+
+## 📸 系统截图
+
+<div style="display: flex; flex-wrap: wrap; justify-content: space-around;">
+  <div style="text-align: center; margin: 10px; max-width: 45%;">
+    <img src="images/create-course-main.png" alt="思维导图展示" width="100%">
+    <p><strong>课程创建</strong><br>只需要输入课程主题并选择难度，快速创建课程, 想学什么学什么</p>
+  </div>
+  <div style="text-align: center; margin: 10px; max-width: 45%;">
+    <img src="images/create-course-chapters.png" alt="设置页面" width="100%">
+    <p><strong>调整课程</strong><br>调整课程目录、查看知识点等信息，灵活掌握课程方向</p>
+  </div>
+  <div style="text-align: center; margin: 10px; max-width: 45%;">
+    <img src="images/mainPage.png" alt="系统首页" width="100%">
+    <p><strong>系统首页</strong><br>展示课程列表和快速入口，用户可以轻松浏览和选择课程。</p>
+  </div>
+  <div style="text-align: center; margin: 10px; max-width: 45%;">
+    <img src="images/course-detail.png" alt="课程目录" width="100%">
+    <p><strong>设置页面</strong><br>按章、按节，结构化学习，模块化设计</p>
+  </div>
+  <div style="text-align: center; margin: 10px; max-width: 45%;">
+    <img src="images/image_show.png" alt="AI 教师界面" width="100%">
+    <p><strong>AI 教师界面</strong><br>与 AI 教师进行实时对话，享受个性化的教学体验。</p>
+  </div>
+  <div style="text-align: center; margin: 10px; max-width: 45%;">
+    <img src="images/mindmap.png" alt="思维导图展示" width="100%">
+    <p><strong>思维导图展示</strong><br>动态生成的知识图谱，帮助用户可视化学习进度。</p>
+  </div>
+  <div style="text-align: center; margin: 10px; max-width: 45%;">
+    <img src="images/diamond.png" alt="思维导图展示" width="100%">
+    <p><strong>奖励机制</strong><br>通过智慧星系统对学生进行及时奖励。</p>
+  </div>
+  <div style="text-align: center; margin: 10px; max-width: 45%;">
+    <img src="images/settings.png" alt="设置页面" width="100%">
+    <p><strong>设置页面</strong><br>配置 AI 服务商和个性化选项，定制学习环境。</p>
+  </div>
+
+</div>
+
+---
+
+## 如何使用
+
+简单3步即可开始你的 AI 学习之旅：
+
+1.  **配置 LLM 服务商**: 在设置页面选择并配置你喜欢的大语言模型服务商（如字节跳动豆包、DeepSeek、Google Gemini 等）。
+2.  **激活教师**: 在设置页面中选择并激活一个 AI 教师角色，并绑定到课程上。
+3.  **开始上课**: 在课程页面选择或创建一个课程主题，AI 教师将自动生成课程内容并开始授课。你可以通过语音与教师互动，提出问题或请求进一步解释。
+4.  **可选**: 配置语音识别、语音合成和图像生成服务商，提升学习体验。
+
+---
+
+## 🧩 支持的服务商（LLM、ASR、TTS、图片生成）
+
+项目的运行离不开现有的各类服务支持。以下是目前已经支持及计划接入的各类服务商列表：
+
+### 🧠 大语言模型
+
+经过开发者测试，大模型存在对DEI、政治立场等场景的意识形态诱导问题。例如部分模型在生成少儿性教育科普课程时，会出现“尊重性别多元化”相关内容。
+
+团队建议各位用户使用由中文境内公司推出的、收到政府监管的模型，确保幼儿在学习过程中不会受到错误意识形态的干扰。
+
+| 服务商                    | 是否支持          |
+|:-----------------------|:--------------|
+| **字节跳动豆包（必须开启提示词缓存）**  | ✅             |
+| **DeepSeek**           | ✅             |
+| **智谱清言 GLM**           | ✅             |
+| **Google Gemini**      | ✅             |
+| **OpenAI (GPT)**       | ✅             |
+| **OneApi (OpenAI 兼容)** | ✅             |
+| **Ollama**             | ❌ (暂不支持，很快更新) |
+| **百度文心一言**             | ❌ (暂不支持)      |
+| **通义千问 Qwen**          | ❌ (暂不支持)      |
+| **Anthropic (Claude)** | ❌ (无支持计划)     |
+
+### 🗣️ 语音识别
+| 服务商                     | 是否支持 |
+|:------------------------| :--- |
+| **字节跳动 火山引擎流式音频识别**     | ✅ |
+| **Google Gemini 多模态识别** | ✅ |
+| **阿里云流式音频识别**           | ❌ (暂不支持) |
+| **百度云流式音频识别**           | ❌ (暂不支持) |
+| **OpenAI Whisper**      | ❌ (无支持计划) |
+
+### 🔊 语音合成
+| 服务商                     | 是否支持 |
+|:------------------------| :--- |
+| **字节跳动豆包 TTS**          | ✅ |
+| **Microsoft Azure TTS** | ✅ |
+
+### 🎨 图像生成
+
+| 服务商                      | 是否支持 |
+|:-------------------------| :--- |
+| **字节跳动豆包 Seedream 系列模型** | ✅ |
+| **硅基流动 (FLUX)**          | ✅ |
+| **Google Imagen**        | ✅ |
+| **阿里Qwen 图像生成**          | ❌ (暂不支持) |
+| **百度 文心一格**              | ❌ (暂不支持) |
+| **Midjourney**           | ❌ (无支持计划) |
+| **DALL-E 3**             | ❌ (无支持计划) |
+---
+
+## ⚖️ 许可协议
 
 本项目（包括代码、文档及容器镜像）遵循以下使用协议：
 
-*   ✅ **个人免费使用 (Free for Personal Use)**: 您可以免费下载、安装、运行本项目用于个人学习、研究或非营利性用途。
-*   🚫 **禁止商业用途 (Commercial Use Prohibited)**: 未经授权，严禁将本项目用于任何形式的商业盈利活动（包括但不限于售卖软件、提供付费服务、企业内部部署等）。
-
-**The project (including code, documentation, and container images) is subject to the following license:**
-
-*   ✅ **Free for Personal Use**: You may download, install, and run this project for personal learning, research, or non-profit purposes for free.
-*   🚫 **Commercial Use Prohibited**: Unauthorized commercial use (including but not limited to selling software, providing paid services, enterprise deployment, etc.) is strictly prohibited.
+*   ✅ **个人免费使用**: 您可以免费下载、安装、运行本项目用于个人学习、研究或非营利性用途。
+*   🚫 **禁止商业用途**: 未经授权，严禁将本项目用于任何形式的商业盈利活动（包括但不限于售卖软件、提供付费服务、企业内部部署等）。
 
 ---
 
-## 🧩 支持的服务商 (Supported Service Providers)
 
-我们致力于集成全球最先进的 AI 模型，为您提供最佳体验。以下是目前支持及计划接入的服务商列表：
+## 🚀 快速开始
 
-We are committed to integrating the world's most advanced AI models to provide you with the best experience. Below is the list of currently supported and planned service providers:
-
-### 🧠 大语言模型 (LLM)
-
-| 服务商 (Provider)         | 是否支持 (Supported) |
-|:-----------------------| :--- |
-| **Google Gemini**      | ✅ |
-| **字节跳动豆包 (Doubao)**    | ✅ |
-| **OpenAI (GPT)**       | ✅ |
-| **OneApi**             | ✅ |
-| **Anthropic (Claude)** | ❌ (Planned) |
-| **DeepSeek**           | ❌ (Planned) |
-
-### 🗣️ 语音识别 (ASR)
-
-| 服务商 (Provider) | 是否支持 (Supported) |
-| :--- | :--- |
-| **Google Gemini** | ✅ |
-| **字节跳动豆包 (Doubao)** | ✅ |
-| **OpenAI Whisper** | ❌ (Planned) |
-
-### 🔊 语音合成 (TTS)
-
-| 服务商 (Provider) | 是否支持 (Supported) |
-| :--- | :--- |
-| **字节跳动豆包 (Doubao)** | ✅ |
-| **Microsoft Azure** | ✅ |
-| **ElevenLabs** | ❌ (Planned) |
-| **OpenAI TTS** | ❌ (Planned) |
-
-### 🎨 图像生成 (Image Gen)
-
-| 服务商 (Provider) | 是否支持 (Supported) |
-| :--- | :--- |
-| **SiliconFlow (FLUX)** | ✅ |
-| **Google Imagen** | ✅ |
-| **字节跳动豆包 (Doubao)** | ✅ |
-| **Midjourney** | ❌ (Planned) |
-| **DALL-E 3** | ❌ (Planned) |
-
----
-
-## ✨ 核心特性 (Key Features)
-
-*   **🤖 AI 智能导师 (AI Intelligent Tutor)**: 
-    *   **中文**: 提供具备不同性格与教学风格的 AI 导师，通过自然语言与您进行互动教学。
-    *   **English**: Provides AI tutors with different personalities and teaching styles for interactive teaching through natural language.
-*   **📚 智能课程生成 (Intelligent Course Generation)**: 
-    *   **中文**: 内置强大的课程生成工具，只需输入主题（如“量子力学”、“罗马历史”），即可通过大模型自动生成完整的课程大纲与内容。
-    *   **English**: Built-in powerful course generation tool. Just enter a topic (e.g., "Quantum Mechanics", "Roman History"), and it will automatically generate a complete course syllabus and content via LLM.
-*   **💬 实时语音交互 (Real-time Voice Interaction)**: 
-    *   **中文**: 支持高精度语音识别 (ASR) 与语音合成 (TTS)，让学习过程像面对面交谈一样自然流畅。
-    *   **English**: Supports high-precision Automatic Speech Recognition (ASR) and Text-to-Speech (TTS), making the learning process as natural and smooth as a face-to-face conversation.
-*   **🧠 智能思维导图 (Intelligent Mind Map)**: 
-    *   **中文**: 实时分析对话内容，自动生成课程知识图谱，帮助学生构建清晰、可视化的知识体系。
-    *   **English**: Real-time analysis of dialogue content to automatically generate a course knowledge graph, helping students build a clear and visual knowledge system.
-*   **🎨 丰富课程生态 (Rich Course Ecosystem)**: 
-    *   **中文**: 支持多种课程形态，从基础理论到实战演练，全方位覆盖。
-    *   **English**: Supports various course forms, covering everything from basic theory to practical exercises.
-*   **🛠️ 强大的管理后台 (Powerful Admin Panel)**: 
-    *   **中文**: 完善的课程编排、用户管理与数据分析功能。
-    *   **English**: Comprehensive course scheduling, user management, and data analysis functions.
-
----
-
-## 🎓 如何学习 (How to Learn)
-
-在 **篝火学** 中，学习不再是枯燥的阅读，而是一场探索之旅：
-
-In **Flame Education**, learning is no longer boring reading, but a journey of exploration:
-
-1.  **提出目标 (Set a Goal)**: 
-    *   告诉系统你想学什么，或者直接使用“课程生成”功能创建一个新课题。
-    *   Tell the system what you want to learn, or use the "Course Generation" feature to create a new topic directly.
-2.  **互动探索 (Interactive Exploration)**: 
-    *   与 AI 导师进行对话，导师会根据你的进度讲解知识点，你可以随时打断、提问或要求举例。
-    *   Talk to the AI tutor. The tutor will explain knowledge points according to your progress. You can interrupt, ask questions, or ask for examples at any time.
-3.  **可视化构建 (Visual Construction)**: 
-    *   在学习过程中，右侧的思维导图会实时生长，帮你把零散的知识点串联成网。
-    *   During the learning process, the mind map on the right will grow in real-time, helping you connect scattered knowledge points into a network.
-4.  **复习巩固 (Review & Consolidate)**: 
-    *   课程结束后，你可以回顾生成的知识图谱，确保每一个知识点都已掌握。
-    *   After the course, you can review the generated knowledge graph to ensure that every knowledge point has been mastered.
-
----
-
-## 🛠️ 技术栈 (Tech Stack)
-
-*   **核心框架 (Core Framework)**: [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
-*   **构建工具 (Build Tool)**: [Vite](https://vitejs.dev/)
-*   **UI 组件库 (UI Library)**: [Tailwind CSS](https://tailwindcss.com/) + [Radix UI](https://www.radix-ui.com/) + [Shadcn/ui](https://ui.shadcn.com/)
-*   **状态管理 (State Management)**: React Context + Hooks
-*   **编辑器 (Editor)**: [Monaco Editor](https://microsoft.github.io/monaco-editor/) (VS Code core)
-*   **语音技术 (Voice Tech)**: Silero VAD (On-device Voice Activity Detection) + Web Audio API
-
----
-
-## 🚀 快速开始 (Quick Start)
-
-### 方式一：作为用户/体验者 (Docker 一键部署)
-### Method 1: As a User/Explorer (Docker One-Click Deployment)
-
-如果您只想快速体验篝火学的完整功能，无需配置开发环境，直接运行我们提供的 Docker 镜像即可。
-
-If you just want to quickly experience the full features of Flame Education without configuring the development environment, simply run our provided Docker image.
+### Docker 一键部署
 
 ```bash
 # 拉取并运行完整镜像 (包含前端 + 后端)
-# Pull and run the complete image (Frontend + Backend)
 docker run -d \
   --name flame-education \
   -p 8080:80 \
-  -v /your/host/storage/path:/app/storage \
+  -v /your/host/storage/path:/opt/storage \
   -e PG_DB=flame-education \
   -e PG_HOST=127.0.0.1 \
   -e PG_PASSWORD=passwd \
   -e PG_PORT=5432 \
   -e PG_USERNAME=flame-education \
-  -e STORAGE_DIR=/app/storage \
+  -e STORAGE_DIR=/opt/storage \
   flameeducation/flame-education:latest
 ```
 
-### 环境变量说明 (Environment Variables)
+### 环境变量说明
 
-| 变量名 (Variable) | 默认值 (Default) | 说明 (Description) |
-|:-----------------|:-----------------|:-------------------|
-| `PG_DB` | `flame-education` | PostgreSQL 数据库名 (PostgreSQL database name) |
-| `PG_HOST` | `127.0.0.1` | PostgreSQL 服务器地址 (PostgreSQL server address) |
-| `PG_PASSWORD` | `passwd` | PostgreSQL 密码 (PostgreSQL password) |
-| `PG_PORT` | `5432` | PostgreSQL 端口 (PostgreSQL port) |
-| `PG_USERNAME` | `flame-education` | PostgreSQL 用户名 (PostgreSQL username) |
-| `STORAGE_DIR` | `/app/storage` | 存储目录路径 (Storage directory path) |
+| 变量名 | 默认值 | 说明                    |
+|:-----------------|:-----------------|:----------------------|
+| `PG_DB` | `flame-education` | PostgreSQL 数据库名       |
+| `PG_HOST` | `127.0.0.1` | PostgreSQL 服务器地址      |
+| `PG_PASSWORD` | `passwd` | PostgreSQL 密码         |
+| `PG_PORT` | `5432` | PostgreSQL 端口         |
+| `PG_USERNAME` | `flame-education` | PostgreSQL 用户名        |
+| `STORAGE_DIR` | `/opt/storage` | 指定容器内文件的存储目录路径，便于目录映射 |
 
-**注意 (Note)**: 请根据您的实际环境修改这些环境变量值。容器内部使用 `/app/storage` 作为存储目录映射。
+**注意**: 请根据您的实际环境修改这些环境变量值。容器内部使用 `/opt/storage` 作为存储目录映射。
 
-**存储目录绑定推荐 (Storage Directory Binding Recommendation)**: 为防止因容器重建导致的数据丢失，强烈推荐将 `STORAGE_DIR` 对应的容器目录 `/app/storage` 与宿主机目录进行绑定挂载。例如，使用 `-v /your/host/storage/path:/app/storage` 参数。这样，即使容器被删除，数据仍保存在宿主机上。
+**存储目录绑定推荐**: 为防止因容器重建导致的数据丢失，强烈推荐将 `STORAGE_DIR` 对应的容器目录 `/opt/storage` 与宿主机目录进行绑定挂载。例如，使用 `-v /your/host/storage/path:/opt/storage` 参数。这样，即使容器被删除，数据仍保存在宿主机上。
 
-**Storage Directory Binding Recommendation**: To prevent data loss due to container reconstruction, it is strongly recommended to bind-mount the container directory `/app/storage` corresponding to `STORAGE_DIR` with the host directory. For example, use the `-v /your/host/storage/path:/app/storage` parameter. This way, even if the container is deleted, the data remains on the host.
+启动后，访问 `http://localhost:${port}` 即可开始学习！
 
-启动后，访问 `http://localhost` 即可开始学习！
-After startup, visit `http://localhost` to start learning!
-
-### 方式二：作为前端开发者 (参与贡献)
-### Method 2: As a Frontend Developer (Contributing)
+###  参与贡献
 
 如果您想参与前端开发或自定义 UI，请按照以下步骤操作：
 
-If you want to participate in frontend development or customize the UI, please follow these steps:
-
-#### 1. 环境准备 (Prerequisites)
+#### 1. 环境准备
 *   Node.js (Recommended v18+)
 *   npm or yarn
 
-#### 2. 安装依赖 (Install Dependencies)
+#### 2. 安装依赖
 
 ```bash
-# 安装依赖 / Install dependencies
+# 安装依赖
 npm install
 ```
 
-#### 3. 启动开发服务器 (Start Development Server)
+#### 3. 启动开发服务器
 
 ```bash
 npm run dev
 ```
 
-#### 4. 后端连接配置 (Backend Connection Config)
+#### 4. 后端连接配置
 默认情况下，开发服务器会代理 `/api` 请求到本地的 `http://127.0.0.1:8080`。
-*   如果您已经在本地通过 Docker 运行了后端服务（如方式一），则无需额外配置。
+*   如果您已经在本地通过 Docker 运行了后端服务（如方式一）,只需要额外映射容器的 8080 端口即可。
 *   如果后端服务运行在其他地址，请修改 `vite.config.ts` 中的 `server.proxy` 配置。
-
-By default, the development server proxies `/api` requests to local `http://127.0.0.1:8080`.
-*   If you are already running the backend service locally via Docker (as in Method 1), no extra configuration is needed.
-*   If the backend service is running at a different address, please modify the `server.proxy` configuration in `vite.config.ts`.
 
 ---
 
-## 🤝 贡献指南 (Contributing)
+## 🤝 贡献指南
 
 我们非常欢迎社区开发者参与到 **篝火学** 的前端建设中来！无论是修复 Bug、优化 UI 还是提交新功能，您的每一次提交都让这个项目变得更好。
 
-We warmly welcome community developers to participate in the frontend construction of **Flame Education**! Whether it's fixing bugs, optimizing UI, or submitting new features, every submission makes this project better.
-
-1.  Fork 本仓库 (Fork this repository)
-2.  创建您的特性分支 (Create your feature branch): `git checkout -b feature/AmazingFeature`
-3.  提交您的修改 (Commit your changes): `git commit -m 'Add some AmazingFeature'`
-4.  推送到分支 (Push to the branch): `git push origin feature/AmazingFeature`
-5.  提交 Pull Request (Submit a Pull Request)
+1.  Fork 本仓库
+2.  创建您的特性分支: `git checkout -b feature/AmazingFeature`
+3.  提交您的修改: `git commit -m 'Add some AmazingFeature'`
+4.  推送到分支: `git push origin feature/AmazingFeature`
+5.  提交 Pull Request
 
 ---
 
 <div align="center">
-  <p>Made with ❤️ by Flame Education Team</p>
+  <p>Made with ❤️ by Flame Education Team, Powered by human intelligence.</p>
 </div>
