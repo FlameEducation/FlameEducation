@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Loader2, RefreshCw, AlertCircle, CheckCircle2, Eye } from 'lucide-react';
 import * as autoCourseApi from '@/api/autoCourse';
 import { CourseGenerationStatusVo } from '@/types/course-generation';
 import { toast } from "sonner";
@@ -16,9 +16,10 @@ import { toast } from "sonner";
 interface CourseGenerationTasksProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onViewTask?: (sessionUuid: string) => void;
 }
 
-export function CourseGenerationTasks({ open, onOpenChange }: CourseGenerationTasksProps) {
+export function CourseGenerationTasks({ open, onOpenChange, onViewTask }: CourseGenerationTasksProps) {
   const [tasks, setTasks] = useState<CourseGenerationStatusVo[]>([]);
   const [loading, setLoading] = useState(false);
   const [retrying, setRetrying] = useState<string | null>(null);
@@ -108,7 +109,15 @@ export function CourseGenerationTasks({ open, onOpenChange }: CourseGenerationTa
                 </div>
 
                 {task.status === 'PARTIAL_SUCCESS' && (
-                  <div className="mt-3 flex justify-end">
+                  <div className="mt-3 flex justify-end gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => onViewTask && onViewTask(task.sessionUuid)}
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      查看详情
+                    </Button>
                     <Button 
                       size="sm" 
                       variant="outline" 
@@ -122,6 +131,19 @@ export function CourseGenerationTasks({ open, onOpenChange }: CourseGenerationTa
                         <RefreshCw className="w-4 h-4 mr-2" />
                       )}
                       重试失败课时
+                    </Button>
+                  </div>
+                )}
+
+                {task.status !== 'PARTIAL_SUCCESS' && (
+                  <div className="mt-3 flex justify-end">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => onViewTask && onViewTask(task.sessionUuid)}
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      查看详情
                     </Button>
                   </div>
                 )}

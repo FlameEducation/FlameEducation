@@ -136,6 +136,8 @@ export interface AutoCourseSessionVo {
   topic: string;
   difficulty: string;
   courseDraft: CourseDraft;
+  status?: string;
+  generatedCourseUuid?: string;
 }
 
 /**

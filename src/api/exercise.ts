@@ -158,8 +158,8 @@ export interface ExerciseResultData {
 
 
 export interface ProgramExerciseResult {
-  exerciseUuid: string;
-  exerciseType: string;
+  uuid: string;
+  type: string;
   questionData: {
     type: string;
     score: number;
@@ -356,11 +356,11 @@ export const submitProgrammingResult = async (
  * @returns Java后端返回的ExerciseDataVo格式
  */
 export const submitExerciseAnswer = async (
-  exerciseUuid: string,
+  uuid: string,
   answerData: string[]
 ): Promise<ExerciseResultData> => {
   return request.post('/api/exercise/submit', {
-    exerciseUuid: exerciseUuid,
+    uuid: uuid,
     answerData: answerData
   });
 };
@@ -369,7 +369,7 @@ export const submitExerciseAnswer = async (
  * 获取练习题详情
  */
 export const getExerciseResult = async (
-  exerciseUuid: string
+  uuid: string
 ): Promise<ExerciseResultData> => {
-  return request.get(`/api/exercise/detail/${exerciseUuid}`);
+  return request.get(`/api/exercise/detail/${uuid}`);
 };

@@ -297,7 +297,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   }, [lessonUuid, setHitCount]);
 
   const getLearningProgress = React.useMemo(() => {
-    if (!lessonInfo) return 0;
+    if (!lessonInfo || !lessonInfo.learningStructure) return 0;
     const { currentChapter, currentPart } = lessonInfo.lessonProgress;
     const totalChapters = lessonInfo.learningStructure.length;
     if (totalChapters === 0) return 0;
@@ -305,7 +305,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
     if (currentChapterIndex < 0) return 0;
     const currentChapterData = lessonInfo.learningStructure[currentChapterIndex];
     if (!currentChapterData) return 0;
-    const totalPartsInChapter = currentChapterData.child.length;
+    const totalPartsInChapter = currentChapterData.child ? currentChapterData.child.length : 0;
     const completedParts = Math.max(0, currentPart - 1);
     const completedChapters = currentChapterIndex;
     const currentChapterProgress = totalPartsInChapter > 0 ? completedParts / totalPartsInChapter : 0;
@@ -316,10 +316,10 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   const displayTitle = React.useMemo(() => {
     if (!lessonInfo) return '篝火学';
     const { currentChapter, currentPart } = lessonInfo.lessonProgress;
-    if (currentChapter <= 0 || currentPart <= 0) return lessonInfo.lessonTitle || '篝火学';
+    if (currentChapter <= 0 || currentPart <= 0 || !lessonInfo.learningStructure) return lessonInfo.lessonTitle || '篝火学';
     const chapter = lessonInfo.learningStructure[currentChapter - 1];
     if (!chapter) return lessonInfo.lessonTitle;
-    const part = chapter.child[currentPart - 1];
+    const part = chapter.child ? chapter.child[currentPart - 1] : null;
     return part?.name || lessonInfo.lessonTitle;
   }, [lessonInfo]);
 

@@ -105,6 +105,13 @@ export const updateCourseStatus = async (uuid: string, status: number): Promise<
   });
 };
 
+// 生成课程封面
+export const generateCourseCover = async (courseUuid: string): Promise<CourseData> => {
+  return request.post<any, CourseData>('/api/admin/course/generateCover', null, {
+    params: { courseUuid }
+  });
+};
+
 
 // 导出课程
 export const exportCourse = async (uuid: string): Promise<Blob> => {

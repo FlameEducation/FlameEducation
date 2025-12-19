@@ -85,7 +85,7 @@ const ProgrammingExerciseMain: React.FC<ProgrammingExerciseProps> = ({
                                                                         }) => {
 
   const editorRef = useRef<{ toggleHints: () => void; runCode: () => Promise<void> }>(null);
-  const {exerciseUuid, questionData, status, answerData} = exerciseData;
+  const {uuid, questionData, status, answerData} = exerciseData;
   const {runCode, envInitComplete} = usePythonEnvContext();
 
   // 保存编辑器设置
@@ -102,12 +102,12 @@ const ProgrammingExerciseMain: React.FC<ProgrammingExerciseProps> = ({
 
     if (!status.isCorrect) {
       // 未完成或答案错误的题目尝试从本地存储获取
-      const storageKey = `${LOCAL_STORAGE_PREFIX}${exerciseUuid}`;
+      const storageKey = `${LOCAL_STORAGE_PREFIX}${uuid}`;
       const savedCode = localStorage.getItem(storageKey);
       return savedCode
     }
 
-  }, [exerciseUuid]);
+  }, [uuid]);
 
 
   // 获取编辑器设置
@@ -135,10 +135,10 @@ const ProgrammingExerciseMain: React.FC<ProgrammingExerciseProps> = ({
   // 保存代码到本地存储
   useEffect(() => {
     if (!status.isCorrect && currentCode !== questionData.initCode) {
-      const storageKey = `${LOCAL_STORAGE_PREFIX}${exerciseUuid}`;
+      const storageKey = `${LOCAL_STORAGE_PREFIX}${uuid}`;
       localStorage.setItem(storageKey, currentCode);
     }
-  }, [currentCode, exerciseUuid, questionData.initCode, status.isCorrect]);
+  }, [currentCode, uuid, questionData.initCode, status.isCorrect]);
 
 
   // 当练习数据变化时重置状态
@@ -156,13 +156,13 @@ const ProgrammingExerciseMain: React.FC<ProgrammingExerciseProps> = ({
     } else {
       setJudgeMode('output');
     }
-  }, [exerciseUuid, getLocalStorageCode, questionData.judgeMode, questionData.type]);
+  }, [uuid, getLocalStorageCode, questionData.judgeMode, questionData.type]);
 
 
   // 获取判题配置
   const fetchJudgeConfig = async (userCode: string) => {
     try {
-      const config = await preSubmitProgrammingExercise(exerciseUuid, userCode);
+      const config = await preSubmitProgrammingExercise(uuid, userCode);
       setJudgeConfig(config);
       setJudgeMode(config.judgeMode);
       return config;
@@ -269,7 +269,7 @@ const ProgrammingExerciseMain: React.FC<ProgrammingExerciseProps> = ({
 
       // 提交到后端
       const submitResult = await submitProgrammingJudgeResult(
-        exerciseUuid,
+        uuid,
         currentCode,
         judgeResult.isCorrect,
         judgeResult.score,
@@ -280,7 +280,7 @@ const ProgrammingExerciseMain: React.FC<ProgrammingExerciseProps> = ({
       // 通知父组件
       if (onSubmitComplete) {
         onSubmitComplete({
-          exerciseUuid,
+          uuid,
           isCorrect: judgeResult.isCorrect,
           score: judgeResult.score,
           feedback: judgeResult.feedback,

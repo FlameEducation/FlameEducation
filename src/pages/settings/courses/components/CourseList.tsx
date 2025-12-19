@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus } from 'lucide-react';
+import { Plus, Upload } from 'lucide-react';
 import { CourseCard } from './CourseCard';
 
 interface Course {
@@ -63,6 +63,10 @@ interface CourseListProps {
   ) => void;
   onToggleTool: (courseUuid: string, toolUuid: string, enabled: boolean) => void;
   onCreate: () => void;
+  onImport?: () => void;
+  generatingCoverCourseUuid: string | null;
+  onGenerateCover: (courseUuid: string) => void;
+  onExport?: (courseUuid: string, title: string) => void;
 }
 
 /**
@@ -83,6 +87,10 @@ export const CourseList: React.FC<CourseListProps> = ({
   onUpdatePromptBinding,
   onToggleTool,
   onCreate,
+  onImport,
+  generatingCoverCourseUuid,
+  onGenerateCover,
+  onExport,
 }) => {
   // 获取排序后的课程列表
   const getSortedCourses = () => {
@@ -118,10 +126,23 @@ export const CourseList: React.FC<CourseListProps> = ({
       {/* 标题和排序控件 */}
       <div className="mb-4 space-y-3 md:space-y-0 md:flex md:items-center md:justify-between">
         <h2 className="text-lg font-bold text-slate-800">课程列表</h2>
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-slate-600 whitespace-nowrap">排序：</span>
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <Button onClick={onCreate} size="sm" className="gap-1 bg-blue-600 hover:bg-blue-700 text-white flex-1 md:flex-none">
+            <Plus className="w-4 h-4" />
+            新建课程
+          </Button>
+          {onImport && (
+            <Button onClick={onImport} size="sm" variant="outline" className="gap-1 flex-1 md:flex-none">
+              <Upload className="w-4 h-4" />
+              导入课程
+            </Button>
+          )}
+          
+          <div className="w-px h-4 bg-slate-200 mx-2 hidden md:block" />
+
+          <span className="text-slate-600 whitespace-nowrap hidden md:inline">排序：</span>
           <Select value={sortBy} onValueChange={onSortChange}>
-            <SelectTrigger className="h-8 text-xs md:text-sm md:w-40">
+            <SelectTrigger className="h-8 text-xs md:text-sm w-full md:w-40 flex-1 md:flex-none">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -157,6 +178,9 @@ export const CourseList: React.FC<CourseListProps> = ({
               onToggleStatus={onToggleStatus}
               onUpdatePromptBinding={onUpdatePromptBinding}
               onToggleTool={onToggleTool}
+              isGeneratingCover={generatingCoverCourseUuid === course.uuid}
+              onGenerateCover={onGenerateCover}
+              onExport={onExport}
             />
           ))}
         </div>

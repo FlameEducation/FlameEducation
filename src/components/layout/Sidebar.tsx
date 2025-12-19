@@ -41,10 +41,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ navItems }) => {
         <div className="flex items-center gap-2">
           <div className="w-8 h-8  rounded-lg flex items-center justify-center">
             <span className="text-white font-bold">
-              <img src="/favicon.ico" alt="篝火学" />
+              <img src="/favicon.ico" alt="火花AI教育" />
             </span>
           </div>
-          <span className="text-xl font-bold text-gray-900">篝火学</span>
+          <span className="text-xl font-bold text-gray-900">火花AI教育</span>
         </div>
       </div>
       <nav className="flex-1 p-4 space-y-2">

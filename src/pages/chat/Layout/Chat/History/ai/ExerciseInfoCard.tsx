@@ -147,7 +147,7 @@ export const ExerciseInfoCard: React.FC<ExerciseInfoCardProps> = ({
   const completed = exerciseData.submitted;
   const correct = exerciseData.correct
   const title = exerciseData.title || '练习题';
-  const exerciseType = exerciseData.type;
+  const exerciseType = exerciseData.type || (exerciseData as any).exerciseType;
 
   // 判断是否为无答案选择题
   const isNoAnswerChoice = exerciseType === 'noAnswerSingleChoice' || exerciseType === 'noAnswerMultipleChoice';

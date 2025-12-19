@@ -66,7 +66,7 @@ export default function InitPage() {
         <CardHeader>
           <CardTitle>系统初始化</CardTitle>
           <CardDescription>
-            欢迎使用 篝火学 系统。检测到这是首次运行，请设置管理员账号。
+            欢迎使用 火花AI教育 系统。检测到这是首次运行，请设置管理员账号。
           </CardDescription>
         </CardHeader>
         <CardContent>

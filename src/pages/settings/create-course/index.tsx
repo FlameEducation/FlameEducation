@@ -35,6 +35,7 @@ import { CourseGenerationStatusVo } from '@/types/course-generation';
 import { AutoCourseSessionVo, LessonDraft } from '@/types/course';
 import { cn } from '@/lib/utils';
 import { CourseGenerationTasks } from './CourseGenerationTasks';
+import { toast } from "sonner";
 
 type GenerationPhase = 'form' | 'generating-structure' | 'preview' | 'submitting' | 'success' | 'error';
 
@@ -216,6 +217,42 @@ const CreateCoursePage: React.FC = () => {
       console.error('Failed to start course generation:', err);
       setError('课程生成失败，请重试');
       setPhase('error');
+    }
+  };
+
+  const handleViewTask = async (sessionUuid: string) => {
+    try {
+      setShowTasks(false);
+      setPhase('generating-structure'); // Show loading
+      
+      const session = await autoCourseApi.getSession(sessionUuid);
+      setSessionData(session);
+      
+      if (session.generatedCourseUuid) {
+          // Already submitted
+          if (session.status === 'COMPLETED') {
+              const status = await autoCourseApi.getCourseGenerationStatus(sessionUuid);
+              setStatus(status);
+              setPhase('success');
+          } else if (session.status === 'FAILED') {
+              setPhase('error');
+              setError('课程生成失败');
+          } else {
+              // Generating
+              const status = await autoCourseApi.getCourseGenerationStatus(sessionUuid);
+              setStatus(status);
+              setPhase('submitting');
+              // Start polling
+              startPolling(sessionUuid);
+          }
+      } else {
+          // Not yet submitted
+          setPhase('preview');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("无法加载任务详情");
+      setPhase('form');
     }
   };
 
@@ -831,7 +868,11 @@ const CreateCoursePage: React.FC = () => {
           </div>
         )}
       </div>
-      <CourseGenerationTasks open={showTasks} onOpenChange={setShowTasks} />
+      <CourseGenerationTasks 
+        open={showTasks} 
+        onOpenChange={setShowTasks} 
+        onViewTask={handleViewTask}
+      />
     </SettingsLayout>
   );
 };

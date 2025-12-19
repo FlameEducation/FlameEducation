@@ -79,7 +79,7 @@ export const useChatHistoryContext = () => useContext(ChatHistoryContext)
 
 interface ChatHistoryProviderProps {
   children: ReactNode;
-  onExerciseReceived?: (messageId: string, exerciseUuid: string) => void;
+  onExerciseReceived?: (messageId: string, uuid: string, type?: string, questionData?: any) => void;
   isTeacherMode?: boolean; // 是否为真人对话模式
   selectedteacherUuid?: string; // 当前选择的教师ID
 }
@@ -227,17 +227,19 @@ export const ChatHistoryProvider = ({children, onExerciseReceived, isTeacherMode
     });
   }
 
-  const addExercise = (messageId: string, exerciseUuid: string) => {
-    console.log("添加练习题:", messageId, exerciseUuid);
+  const addExercise = (messageId: string, uuid: string, type?: string, questionData?: any) => {
+    console.log("添加练习题:", messageId, uuid, type);
 
     // 更新聊天历史记录中的练习题信息
     setChatHistory(prev => {
       const index = prev.findIndex(item => item.uuid === messageId);
       if (index !== -1) {
         const updatedMessages = [...prev];
-        updatedMessages[index].exerciseUuid = exerciseUuid;
+        updatedMessages[index].exerciseUuid = uuid;
         updatedMessages[index].exerciseData = {
-          uuid: exerciseUuid
+          uuid: uuid,
+          type: type,
+          questionData: questionData
         };
         return updatedMessages;
       }
@@ -438,10 +440,10 @@ export const ChatHistoryProvider = ({children, onExerciseReceived, isTeacherMode
       onMindMapReceived: (mindMapUuid: string) => {
         addMindMap(aiMessageUuid, mindMapUuid)
       },
-      onExerciseReceived: (exerciseUuid: string) => {
-        addExercise(aiMessageUuid, exerciseUuid);
+      onExerciseReceived: (uuid: string) => {
+        addExercise(aiMessageUuid, uuid);
         // 同时调用外部传入的回调
-        onExerciseReceived?.(aiMessageUuid, exerciseUuid);
+        onExerciseReceived?.(aiMessageUuid, uuid);
       },
       onUserAudioReceived: (audioUrl: string) => {
         setAudioUrl(userMessageUuid, audioUrl);
@@ -562,10 +564,10 @@ export const ChatHistoryProvider = ({children, onExerciseReceived, isTeacherMode
       onMindMapReceived: (mindMapUuid: string) => {
         addMindMap(aiMessageUuid, mindMapUuid)
       },
-      onExerciseReceived: (exerciseUuid: string, exerciseType: string, questionData: any) => {
-        addExercise(aiMessageUuid, exerciseUuid, exerciseType, questionData);
+      onExerciseReceived: (uuid: string, type: string, questionData: any) => {
+        addExercise(aiMessageUuid, uuid, type, questionData);
         // 同时调用外部传入的回调
-        onExerciseReceived?.(aiMessageUuid, exerciseUuid, exerciseType, questionData);
+        onExerciseReceived?.(aiMessageUuid, uuid, type, questionData);
       },
       onUserAudioReceived: (audioUrl: string) => {
         setAudioUrl(userMessageUuid, audioUrl);

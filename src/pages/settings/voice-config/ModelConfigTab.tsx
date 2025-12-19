@@ -3,6 +3,7 @@ import {
   getAdminTeachers, 
   createTeacher, 
   updateTeacher, 
+  updateTeacherStatus,
   deleteTeacher, 
   TeacherInfo, 
   getTeacherInfo 
@@ -25,6 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, Save, Volume2, Play, Plus, Pencil, Trash2, Upload, User, Search } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 const ModelConfigTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -72,13 +74,27 @@ const ModelConfigTab: React.FC = () => {
   };
 
   const handleDelete = async (uuid: string) => {
-    if (!confirm('确定要删除这个模型吗？此操作不可恢复。')) return;
+    if (!confirm('确定要删除这个角色吗？此操作不可恢复。')) return;
     try {
       await deleteTeacher(uuid);
       toast.success('删除成功');
       loadTeachers();
     } catch (error) {
       toast.error('删除失败');
+    }
+  };
+
+  const handleToggleStatus = async (teacher: TeacherInfo, checked: boolean) => {
+    try {
+      const newStatus = checked ? 1 : 0;
+      await updateTeacherStatus(teacher.uuid, newStatus);
+      toast.success(checked ? '已启用' : '已禁用');
+      // Update local state to reflect change immediately without full reload if possible, 
+      // or just reload. Reload is safer for consistency.
+      loadTeachers(); 
+    } catch (error) {
+      console.error('状态更新失败', error);
+      toast.error('状态更新失败');
     }
   };
 
@@ -103,14 +119,14 @@ const ModelConfigTab: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-medium">模型管理</h2>
-          <p className="text-sm text-muted-foreground">管理AI助教模型、头像及语音配置</p>
+          <h2 className="text-lg font-medium">语音角色配置</h2>
+          <p className="text-sm text-muted-foreground">管理AI助教角色、头像及语音配置</p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="搜索模型..." 
+              placeholder="搜索角色..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-8"
@@ -118,7 +134,7 @@ const ModelConfigTab: React.FC = () => {
           </div>
           <Button onClick={handleCreate} className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
-            新建模型
+            新建角色
           </Button>
         </div>
       </div>
@@ -135,6 +151,7 @@ const ModelConfigTab: React.FC = () => {
               teacher={teacher} 
               onEdit={() => handleEdit(teacher)}
               onDelete={() => handleDelete(teacher.uuid)}
+              onToggleStatus={(checked) => handleToggleStatus(teacher, checked)}
             />
           ))}
         </div>
@@ -143,9 +160,9 @@ const ModelConfigTab: React.FC = () => {
       <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingTeacher ? '编辑模型' : '新建模型'}</DialogTitle>
+            <DialogTitle>{editingTeacher ? '编辑角色' : '新建角色'}</DialogTitle>
             <DialogDescription>
-              {editingTeacher ? '修改模型的基本信息和语音配置' : '创建一个新的AI助教模型'}
+              {editingTeacher ? '修改角色的基本信息和语音配置' : '创建一个新的AI助教角色'}
             </DialogDescription>
           </DialogHeader>
           
@@ -166,7 +183,8 @@ const TeacherCard: React.FC<{
   teacher: TeacherInfo;
   onEdit: () => void;
   onDelete: () => void;
-}> = ({ teacher, onEdit, onDelete }) => {
+  onToggleStatus: (checked: boolean) => void;
+}> = ({ teacher, onEdit, onDelete, onToggleStatus }) => {
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow group">
       <CardHeader className="flex flex-row items-start gap-4 p-4 pb-2">
@@ -177,9 +195,16 @@ const TeacherCard: React.FC<{
         <div className="flex-1 overflow-hidden">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base truncate font-semibold">{teacher.teacherName}</CardTitle>
-            <Badge variant={teacher.status === 1 ? 'default' : 'secondary'} className="text-[10px] h-5">
-              {teacher.status === 1 ? '启用' : '禁用'}
-            </Badge>
+            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+               <span className={cn("text-[10px]", teacher.status === 1 ? "text-green-600" : "text-slate-400")}>
+                 {teacher.status === 1 ? '已启用' : '已禁用'}
+               </span>
+               <Switch 
+                 checked={teacher.status === 1} 
+                 onCheckedChange={onToggleStatus}
+                 className="scale-75 data-[state=checked]:bg-green-600"
+               />
+            </div>
           </div>
           <div className="text-xs text-muted-foreground mt-1 truncate">
             {teacher.personality || '未设置性格'}
@@ -269,7 +294,7 @@ const BasicInfoForm: React.FC<{
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.teacherName) {
-      toast.error('请输入模型名称');
+      toast.error('请输入角色名称');
       return;
     }
 
@@ -321,11 +346,11 @@ const BasicInfoForm: React.FC<{
       </div>
 
       <div className="grid gap-2">
-        <Label>模型名称</Label>
+        <Label>角色名称</Label>
         <Input 
           value={formData.teacherName} 
           onChange={e => setFormData({...formData, teacherName: e.target.value})} 
-          placeholder="给模型起个名字"
+          placeholder="给角色起个名字"
         />
       </div>
 
@@ -335,7 +360,7 @@ const BasicInfoForm: React.FC<{
         <Textarea 
           value={formData.personality} 
           onChange={e => setFormData({...formData, personality: e.target.value})} 
-          placeholder="定义模型的性格、语气和行为模式，推荐10字之内..."
+          placeholder="定义角色的性格、语气和行为模式，推荐10字之内..."
           className="min-h-[100px]"
         />
       </div>
@@ -344,7 +369,7 @@ const BasicInfoForm: React.FC<{
         <div className="space-y-0.5">
           <Label>启用状态</Label>
           <div className="text-sm text-muted-foreground">
-            是否在聊天界面显示此模型
+            是否在聊天界面显示此角色
           </div>
         </div>
         <Switch 
@@ -363,6 +388,33 @@ const BasicInfoForm: React.FC<{
     </form>
   );
 };
+
+const doubaoEmotions = [
+  { label: '开心 (happy)', value: 'happy' },
+  { label: '悲伤 (sad)', value: 'sad' },
+  { label: '生气 (angry)', value: 'angry' },
+  { label: '惊讶 (surprised)', value: 'surprised' },
+  { label: '恐惧 (fear)', value: 'fear' },
+  { label: '厌恶 (hate)', value: 'hate' },
+  { label: '激动 (excited)', value: 'excited' },
+  { label: '冷漠 (coldness)', value: 'coldness' },
+  { label: '中性 (neutral)', value: 'neutral' },
+  { label: '沮丧 (depressed)', value: 'depressed' },
+  { label: '撒娇 (lovey-dovey)', value: 'lovey-dovey' },
+  { label: '害羞 (shy)', value: 'shy' },
+  { label: '安慰鼓励 (comfort)', value: 'comfort' },
+  { label: '咆哮/焦急 (tension)', value: 'tension' },
+  { label: '温柔 (tender)', value: 'tender' },
+  { label: '讲故事 / 自然讲述 (storytelling)', value: 'storytelling' },
+  { label: '情感电台 (radio)', value: 'radio' },
+  { label: '磁性 (magnetic)', value: 'magnetic' },
+  { label: '广告营销 (advertising)', value: 'advertising' },
+  { label: '气泡音 (vocal-fry)', value: 'vocal-fry' },
+  { label: '低语 (ASMR)', value: 'asmr' },
+  { label: '新闻播报 (news)', value: 'news' },
+  { label: '娱乐八卦 (entertainment)', value: 'entertainment' },
+  { label: '方言 (dialect)', value: 'dialect' },
+];
 
 const VoiceConfigForm: React.FC<{ teacher: TeacherInfo; onSuccess: () => void }> = ({ teacher, onSuccess }) => {
   const [saving, setSaving] = useState(false);
@@ -450,11 +502,22 @@ const VoiceConfigForm: React.FC<{ teacher: TeacherInfo; onSuccess: () => void }>
       </div>
       <div className="grid gap-2">
         <Label>情感 (Emotion)</Label>
-        <Input 
-          value={config.emotionConfig || ''} 
-          onChange={(e) => setConfig(prev => ({ ...prev, emotionConfig: e.target.value }))}
-          placeholder="例如: happy"
-        />
+        <Select 
+          value={config.emotionConfig || 'NONE'} 
+          onValueChange={(val) => setConfig(prev => ({ ...prev, emotionConfig: val === 'NONE' ? '' : val }))}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="选择情感" />
+          </SelectTrigger>
+          <SelectContent className="max-h-[300px]">
+            <SelectItem value="NONE">不选择 / 默认</SelectItem>
+            {doubaoEmotions.map(e => (
+              <SelectItem key={e.value} value={e.value}> 
+                {e.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

@@ -36,7 +36,7 @@ interface ExerciseContextType {
   loadExerciseData: (exerciseId: string) => Promise<ExerciseResultData | null>;
   updateExerciseData: (exerciseId: string, updatedData: Partial<ExerciseResultData>) => void;
   addExerciseData: (exerciseId: string, exerciseData: ExerciseResultData) => void;
-  addExerciseFromSSE: (messageId: string, exerciseUuid: string, exerciseType: string, questionData: any) => void;
+  addExerciseFromSSE: (messageId: string, uuid: string, type: string, questionData: any) => void;
   
   // 练习题操作
   startExercise: (exerciseId: string) => Promise<void>;
@@ -109,9 +109,10 @@ export const ExerciseProvider: React.FC<ExerciseProviderProps> = ({children}) =>
   // 加载练习题数据 - 类似ChatHistoryContext的API调用模式
   const loadExerciseData = useCallback(async (exerciseId: string): Promise<ExerciseResultData | null> => {
     try {
-      // 如果已经在缓存中，直接返回
-      if (dataMapRef.current.has(exerciseId)) {
-        return dataMapRef.current.get(exerciseId)!;
+      // 如果已经在缓存中且数据完整（有 type），直接返回
+      const cachedData = dataMapRef.current.get(exerciseId);
+      if (cachedData && (cachedData as any).type) {
+        return cachedData as any;
       }
 
       // 如果正在加载，等待加载完成
@@ -204,13 +205,13 @@ export const ExerciseProvider: React.FC<ExerciseProviderProps> = ({children}) =>
   }, []);
 
   // 从SSE添加新练习题 - 类似ChatHistoryContext的addExercise
-  const addExerciseFromSSE = useCallback((messageId: string, exerciseUuid: string, exerciseType: string, questionData: any) => {
-    console.log("ExerciseContext - 从SSE添加练习题:", messageId, exerciseUuid, exerciseType);
+  const addExerciseFromSSE = useCallback((messageId: string, uuid: string, type: string, questionData: any) => {
+    console.log("ExerciseContext - 从SSE添加练习题:", messageId, uuid, type);
 
     // 创建初始练习题数据
     const initialExerciseData: ExerciseResultData = {
-      exerciseUuid,
-      exerciseType,
+      uuid,
+      type,
       questionData,
       answerData: undefined,
       status: {
@@ -223,18 +224,18 @@ export const ExerciseProvider: React.FC<ExerciseProviderProps> = ({children}) =>
       feedback: '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
-    };
+    } as any;
 
     // 添加到数据缓存
     setState(prev => {
       const newDataMap = new Map(prev.exerciseDataMap);
-      newDataMap.set(exerciseUuid, initialExerciseData);
+      newDataMap.set(uuid, initialExerciseData);
 
       return {
         ...prev,
         exerciseDataMap: newDataMap,
         // 设置为当前活跃练习题，这样会在BottomInputArea中显示
-        currentExerciseId: exerciseUuid
+        currentExerciseId: uuid
       };
     });
   }, []);

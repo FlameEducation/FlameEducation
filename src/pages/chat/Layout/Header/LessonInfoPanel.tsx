@@ -51,17 +51,19 @@ export const LessonInfoPanel: React.FC<LessonInfoPanelProps> = ({ lessonInfo, is
   
   // 判断章节是否已完成
   const isChapterCompleted = (chapterIndex: number) => {
-    if (!lessonInfo) return false;
+    if (!lessonInfo || !lessonInfo.learningStructure) return false;
     
     const { currentChapter, currentPart } = lessonInfo.lessonProgress;
     const chapter = lessonInfo.learningStructure[chapterIndex];
     
+    if (!chapter) return false;
+
     // 如果是前面的章节，则已完成
     if (chapterIndex + 1 < currentChapter) return true;
     
     // 如果是当前章节，且当前部分是章节的最后一部分且已完成，则章节已完成
     if (currentChapter === chapterIndex + 1 && 
-        currentPart > chapter.child.length) {
+        chapter.child && currentPart > chapter.child.length) {
       return true;
     }
     
@@ -197,13 +199,13 @@ export const LessonInfoPanel: React.FC<LessonInfoPanelProps> = ({ lessonInfo, is
         
         {/* 时间线风格的章节列表 */}
         <div className="space-y-4">
-          {learningStructure.map((chapter, chapterIndex) => {
+          {Array.isArray(learningStructure) && learningStructure.map((chapter, chapterIndex) => {
             const isCurrentChapter = lessonProgress.currentChapter === chapterIndex + 1;
             const isCompletedChapter = isChapterCompleted(chapterIndex);
             const isExpanded = expandedChapterIndex === chapterIndex;
             
             // 计算章节进度
-            const totalPartsInChapter = chapter.child.length;
+            const totalPartsInChapter = chapter.child ? chapter.child.length : 0;
             let completedPartsInChapter = 0;
             
             if (isCompletedChapter) {
@@ -302,7 +304,7 @@ export const LessonInfoPanel: React.FC<LessonInfoPanelProps> = ({ lessonInfo, is
                           className="overflow-hidden border-t border-gray-100"
                         >
                           <div className="divide-y divide-gray-100">
-                            {chapter.child.map((part, partIndex) => {
+                            {Array.isArray(chapter.child) && chapter.child.map((part, partIndex) => {
                               const isCompleted = isPartCompleted(chapterIndex, partIndex);
                               const isCurrent = isCurrentPart(chapterIndex, partIndex);
                               

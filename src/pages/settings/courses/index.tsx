@@ -5,13 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import SettingsLayout from '../components/SettingsLayout';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { CourseList } from './components/CourseList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -20,32 +14,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
-  Plus,
   Save,
   X,
   BookOpen,
   Clock,
   Users,
   TrendingUp,
-  MessageSquare,
-  Pencil,
-  Trash2,
-  Wrench,
   Image as ImageIcon,
-  FileText,
-  Settings,
-  Layers,
-  Download,
-  Upload,
 } from 'lucide-react';
 import * as adminCourseApi from '@/api/admin-course';
 import type { CourseData, CourseStats, PromptTemplate, CoursePromptBinding, CourseToolStatus } from '@/api/admin-course';
@@ -65,6 +42,7 @@ const AdminCoursesPage: React.FC = () => {
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("basic");
+  const [generatingCoverCourseUuid, setGeneratingCoverCourseUuid] = useState<string | null>(null);
   
   // Prompt 选择器状态
   const [coursePromptBindings, setCoursePromptBindings] = useState<Record<string, CoursePromptBinding>>({});
@@ -398,6 +376,44 @@ const AdminCoursesPage: React.FC = () => {
     }
   };
 
+  const handleGenerateCover = async (courseUuid: string) => {
+    if (generatingCoverCourseUuid) return;
+    
+    try {
+      setGeneratingCoverCourseUuid(courseUuid);
+      toast({
+        title: "正在生成封面",
+        description: "AI正在为您绘制课程封面，请稍候...",
+      });
+      
+      const updatedCourse = await adminCourseApi.generateCourseCover(courseUuid);
+      
+      // 更新列表中的课程封面
+      setCourses(prev => prev.map(c => 
+        c.uuid === courseUuid 
+          ? { ...c, coverImageUrl: updatedCourse.coverImageUrl } 
+          : c
+      ));
+      
+      toast({
+        title: "封面生成成功",
+        description: "课程封面已自动更新",
+      });
+      
+      // 重新加载数据以确保一致性
+      await loadData();
+    } catch (error: any) {
+      console.error('Failed to generate cover:', error);
+      toast({
+        variant: "destructive",
+        title: "生成失败",
+        description: error.message || "无法生成课程封面",
+      });
+    } finally {
+      setGeneratingCoverCourseUuid(null);
+    }
+  };
+
   const handleExport = (uuid: string, title: string) => {
     try {
       const token = localStorage.getItem('token');
@@ -512,288 +528,25 @@ const AdminCoursesPage: React.FC = () => {
         )}
 
         {/* 课程列表 */}
-        <Card className="p-4 md:p-6">
-          {/* 标题和排序控件 */}
-          <div className="mb-4 space-y-3 md:space-y-0 md:flex md:items-center md:justify-between">
-            <h2 className="text-lg font-bold text-slate-800">课程列表</h2>
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <Button onClick={handleCreate} size="sm" className="gap-1 bg-blue-600 hover:bg-blue-700 text-white flex-1 md:flex-none">
-                <Plus className="w-4 h-4" />
-                新建课程
-              </Button>
-              <Button onClick={handleImportClick} size="sm" variant="outline" className="gap-1 flex-1 md:flex-none">
-                <Upload className="w-4 h-4" />
-                导入课程
-              </Button>
-              
-              <div className="w-px h-4 bg-slate-200 mx-2 hidden md:block" />
-
-              <span className="text-slate-600 whitespace-nowrap hidden md:inline">排序：</span>
-              <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-                <SelectTrigger className="h-8 text-xs md:text-sm w-full md:w-40 flex-1 md:flex-none">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="createTime">创建时间</SelectItem>
-                  <SelectItem value="progress">课程进度</SelectItem>
-                  <SelectItem value="title">课程名称</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          {loading ? (
-            <div className="text-center py-12 text-slate-600">加载中...</div>
-          ) : courses.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-slate-600 mb-4">暂无课程</p>
-              <Button onClick={handleCreate} variant="outline">
-                <Plus className="w-4 h-4 mr-2" />
-                创建第一个课程
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {getSortedCourses().map((course) => {
-                const toolStatuses = courseToolBindings[course.uuid!] || [];
-                const totalTools = toolStatuses.length;
-                const enabledTools = toolStatuses.filter(tool => tool.isEnabled).length;
-
-                return (
-                  <div
-                    key={course.uuid}
-                    className="bg-white border rounded-xl hover:shadow-md transition-all p-4 flex flex-col md:flex-row gap-4"
-                  >
-                    {/* 左侧：封面图 */}
-                    <div className="w-full h-48 md:w-40 md:h-28 rounded-lg bg-slate-100 flex-shrink-0 overflow-hidden border border-slate-200 relative group self-start">
-                        {course.coverImageUrl ? (
-                          <img src={course.coverImageUrl} alt={course.title} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">
-                            <ImageIcon className="w-8 h-8" />
-                          </div>
-                        )}
-                    </div>
-
-                    {/* 右侧：所有内容 */}
-                    <div className="flex-1 min-w-0 flex flex-col gap-3">
-                        {/* 第一行：标题、状态、描述、操作按钮 */}
-                        <div className="flex justify-between items-start gap-2">
-                            <div className="space-y-1 min-w-0 flex-1">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <h3 className="font-bold text-slate-800 text-base truncate max-w-full">
-                                        {course.title}
-                                    </h3>
-                                    <Badge 
-                                        variant={course.status === 1 ? 'default' : 'secondary'}
-                                        className="cursor-pointer hover:opacity-80 transition-opacity h-5 text-xs px-1.5 flex-shrink-0"
-                                        onClick={() => handleToggleStatus(course.uuid!, course.status || 0)}
-                                    >
-                                        {course.status === 1 ? '已发布' : '草稿'}
-                                    </Badge>
-                                </div>
-                                <p className="text-sm text-slate-500 line-clamp-2 md:line-clamp-1">
-                                    {course.description || '暂无描述'}
-                                </p>
-                            </div>
-                            
-                            <div className="flex items-center gap-1 flex-shrink-0">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleExport(course.uuid!, course.title)}
-                                  className="h-8 w-8 md:h-7 md:w-7 text-slate-500 hover:text-green-600"
-                                  title="导出课程"
-                                >
-                                  <Download className="w-4 h-4 md:w-3.5 md:h-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleEdit(course.uuid!)}
-                                  className="h-8 w-8 md:h-7 md:w-7 text-slate-500 hover:text-blue-600"
-                                  title="编辑课程"
-                                >
-                                  <Pencil className="w-4 h-4 md:w-3.5 md:h-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleDelete(course.uuid!)}
-                                  className="h-8 w-8 md:h-7 md:w-7 text-slate-500 hover:text-red-600"
-                                  title="删除课程"
-                                >
-                                  <Trash2 className="w-4 h-4 md:w-3.5 md:h-3.5" />
-                                </Button>
-                            </div>
-                        </div>
-
-                        {/* 第二行：统计信息 + Prompt/工具状态 */}
-                        <div className="flex items-center gap-4 text-sm text-slate-600 flex-wrap">
-                            <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-1.5">
-                                    <Layers className="w-3.5 h-3.5 text-slate-400" />
-                                    <span className="text-xs">{course.totalChapters || 0} 章</span>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                    <Clock className="w-3.5 h-3.5 text-slate-400" />
-                                    <span className="text-xs">{course.totalLessons || 0} 课时</span>
-                                </div>
-                            </div>
-                            
-                            <div className="w-px h-3 bg-slate-200 hidden md:block" />
-
-                            <div className="flex items-center gap-3 w-full md:w-auto">
-                                {/* Prompt 状态 */}
-                                <div className="flex items-center gap-1.5">
-                                    <span className="text-xs text-slate-500">Prompt:</span>
-                                    <div className="flex items-center gap-1">
-                                        <MessageSquare className={`w-3.5 h-3.5 ${coursePromptBindings[course.uuid!]?.chatPromptUuid ? 'text-green-500' : 'text-slate-300'}`} />
-                                        <FileText className={`w-3.5 h-3.5 ${coursePromptBindings[course.uuid!]?.blackboardPromptUuid ? 'text-green-500' : 'text-slate-300'}`} />
-                                    </div>
-                                </div>
-
-                                {/* 工具状态 */}
-                                <div className="flex items-center gap-1.5">
-                                    <span className="text-xs text-slate-500">工具:</span>
-                                    {totalTools > 0 ? (
-                                        <span className={`text-xs font-medium ${enabledTools === totalTools ? 'text-green-600' : 'text-amber-600'}`}>
-                                        {enabledTools}/{totalTools}
-                                        </span>
-                                    ) : (
-                                        <span className="text-xs text-slate-400">-</span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 第三行：配置按钮 */}
-                        <div className="flex flex-wrap items-center gap-2 pt-1">
-                             <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button variant="outline" size="sm" className="h-8 md:h-7 text-xs gap-1.5 px-3 md:px-2 flex-1 md:flex-none">
-                                    <Wrench className="w-3 h-3" />
-                                    配置工具
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-80" align="start">
-                                   <div className="space-y-3">
-                                      <div className="flex items-center justify-between">
-                                        <h3 className="font-semibold text-sm">工具配置</h3>
-                                        <span className="text-xs text-slate-500">已启用 {enabledTools}/{totalTools}</span>
-                                      </div>
-                                      {(courseToolBindings[course.uuid!] || []).length > 0 ? (
-                                        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-                                          {courseToolBindings[course.uuid!]?.map(tool => (
-                                            <div
-                                              key={tool.toolUuid}
-                                              className="flex items-start justify-between gap-3 border rounded-md p-2 hover:bg-slate-50"
-                                            >
-                                              <div className="flex-1 min-w-0">
-                                                <p className="font-medium text-sm text-slate-700 truncate">{tool.toolName}</p>
-                                                <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">{tool.toolDescription}</p>
-                                              </div>
-                                              <Switch
-                                                checked={tool.isEnabled}
-                                                onCheckedChange={(checked) => handleToggleTool(course.uuid!, tool.toolUuid, checked)}
-                                                className="scale-75 data-[state=checked]:bg-green-600"
-                                              />
-                                            </div>
-                                          ))}
-                                        </div>
-                                      ) : (
-                                        <p className="text-xs text-slate-500 py-2 text-center">暂无可用工具</p>
-                                      )}
-                                    </div>
-                                </PopoverContent>
-                             </Popover>
-
-                             <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button variant="outline" size="sm" className="h-8 md:h-7 text-xs gap-1.5 px-3 md:px-2 flex-1 md:flex-none">
-                                    <Settings className="w-3 h-3" />
-                                    配置 Prompt
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-80" align="start">
-                                  <div className="space-y-4">
-                                    <h3 className="font-semibold text-sm border-b pb-2">Prompt 绑定设置</h3>
-                                    
-                                    {/* 聊天场景 */}
-                                    <div className="space-y-1.5">
-                                      <div className="flex items-center gap-2 text-sm text-slate-700">
-                                        <MessageSquare className="w-4 h-4 text-blue-500" />
-                                        <span>聊天场景</span>
-                                      </div>
-                                      <Select
-                                        defaultValue={coursePromptBindings[course.uuid!]?.chatPromptUuid || 'none'}
-                                        onValueChange={(value) => handleUpdatePromptBinding(course.uuid!, 'chat', value === 'none' ? undefined : value)}
-                                      >
-                                        <SelectTrigger className="w-full h-8 text-xs">
-                                          <SelectValue placeholder="选择 Prompt 模板" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="none">不绑定</SelectItem>
-                                          {promptTemplates
-                                            .filter(t => (t.templateType === 'CHAT' && t.isEnabled === true))
-                                            .map(template => (
-                                              <SelectItem key={template.uuid || template.sceneUuid} value={template.uuid || template.sceneUuid || ''}>
-                                                {template.templateName || template.promptName || template.name || template.aiModelName}
-                                              </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-
-                                    {/* 小黑板场景 */}
-                                    <div className="space-y-1.5">
-                                      <div className="flex items-center gap-2 text-sm text-slate-700">
-                                        <FileText className="w-4 h-4 text-amber-500" />
-                                        <span>小黑板场景</span>
-                                      </div>
-                                      <Select
-                                        defaultValue={coursePromptBindings[course.uuid!]?.blackboardPromptUuid || 'none'}
-                                        onValueChange={(value) => handleUpdatePromptBinding(course.uuid!, 'blackboard', value === 'none' ? undefined : value)}
-                                      >
-                                        <SelectTrigger className="w-full h-8 text-xs">
-                                          <SelectValue placeholder="选择 Prompt 模板" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="none">不绑定</SelectItem>
-                                          {promptTemplates
-                                            .filter(t => (t.templateType === 'BLACKBOARD' && t.isEnabled === true))
-                                            .map(template => (
-                                              <SelectItem key={template.uuid || template.sceneUuid} value={template.uuid || template.sceneUuid || ''}>
-                                                {template.templateName || template.promptName || template.name || template.aiModelName}
-                                              </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                  </div>
-                                </PopoverContent>
-                             </Popover>
-                             
-                             <div className="flex-1 hidden md:block" />
-                             
-                             <div className="flex items-center justify-end gap-2 w-full md:w-auto mt-2 md:mt-0">
-                                <span className="text-xs text-slate-500">
-                                  {course.status === 1 ? '已发布' : '未发布'}
-                                </span>
-                                <Switch
-                                  checked={course.status === 1}
-                                  onCheckedChange={() => handleToggleStatus(course.uuid!, course.status)}
-                                  className="scale-75 data-[state=checked]:bg-green-600"
-                                />
-                             </div>
-                        </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Card>
+        <CourseList
+          courses={courses}
+          loading={loading}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          promptTemplates={promptTemplates}
+          coursePromptBindings={coursePromptBindings}
+          courseToolBindings={courseToolBindings}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onToggleStatus={handleToggleStatus}
+          onUpdatePromptBinding={handleUpdatePromptBinding}
+          onToggleTool={handleToggleTool}
+          onCreate={handleCreate}
+          onImport={handleImportClick}
+          generatingCoverCourseUuid={generatingCoverCourseUuid}
+          onGenerateCover={handleGenerateCover}
+          onExport={handleExport}
+        />
       </div>
 
       {/* 编辑/创建对话框 */}

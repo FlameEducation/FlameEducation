@@ -18,15 +18,15 @@ const VoiceConfigPage: React.FC = () => {
         </AlertDescription>
       </Alert>
 
-      <Tabs defaultValue="provider" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="provider">服务商配置</TabsTrigger>
-          <TabsTrigger value="model">模型配置</TabsTrigger>
+      <Tabs defaultValue="model" className="w-full">
+        <TabsList className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
+          <TabsTrigger value="model" className="px-4">语音角色配置</TabsTrigger>
+          <TabsTrigger value="provider" className="px-4">服务商配置</TabsTrigger>
         </TabsList>
-        <TabsContent value="provider">
+        <TabsContent value="provider" className="mt-4">
           <ProviderConfigTab />
         </TabsContent>
-        <TabsContent value="model">
+        <TabsContent value="model" className="mt-4">
           <ModelConfigTab />
         </TabsContent>
       </Tabs>

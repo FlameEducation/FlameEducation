@@ -9,8 +9,9 @@ export const ExerciseModal: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [contentReady, setContentReady] = useState(false);
   
-  // 检查是否为编程题
-  const isProgrammingExercise = rightPanelExercise?.exerciseType === 'programming';
+  // 检查是否为编程题，兼容两种类型字段
+  const exerciseType = rightPanelExercise?.type;
+  const isProgrammingExercise = exerciseType === 'programming';
 
   // 监听屏幕尺寸变化
   useEffect(() => {
