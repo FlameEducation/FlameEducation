@@ -66,10 +66,12 @@ const CourseSection = {
   MyCourses: ({ 
     isLoading, 
     courses,
+    continueLearning,
     onViewAll  // 添加点击处理函数
   }: { 
     isLoading: boolean; 
     courses: UserCourse[];
+    continueLearning: Course | null;
     onViewAll: () => void;
   }) => (
     <section className="space-y-3">
@@ -91,7 +93,11 @@ const CourseSection = {
             Array(3).fill(0).map((_, i) => <Skeletons.MyCourse key={i} />)
           ) : (
             courses.map(course => (
-              <MyCourseCard key={course.uuid} course={course} />
+              <MyCourseCard 
+                key={course.uuid} 
+                course={course} 
+                isHighlighted={continueLearning?.uuid === course.uuid}
+              />
             ))
           )}
         </div>
@@ -215,6 +221,23 @@ const CoursesPage: React.FC = () => {
   const [myCourses, setMyCourses] = useState<UserCourse[]>([]);
   const [recommendCourses, setRecommendCourses] = useState<Course[]>([]);
   const [newCourses, setNewCourses] = useState<Course[]>([]);
+  const [continueLearning, setContinueLearning] = useState<Course | null>(null);
+
+  // 获取继续学习数据
+  useEffect(() => {
+    const fetchContinueLearning = async () => {
+      try {
+        const courseRes = await api.getContinueLearning();
+        if(courseRes){
+          setContinueLearning(courseRes);
+        }
+      } catch (error) {
+        console.error('Failed to fetch continue learning:', error);
+      }
+    };
+
+    fetchContinueLearning();
+  }, []);
 
   // 获取我的课程
   useEffect(() => {
@@ -288,6 +311,7 @@ const CoursesPage: React.FC = () => {
           <CourseSection.MyCourses 
             isLoading={isLoadingMyCourses} 
             courses={myCourses}
+            continueLearning={continueLearning}
             onViewAll={() => navigate('/courses/all-courses')}  // 添加点击处理
           />
           <CourseSection.RecommendCourses 

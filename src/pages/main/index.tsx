@@ -6,11 +6,13 @@ import {Progress} from "@/components/ui/progress";
 import {
   BookOpen,
   ChevronRight,
-  Plus
+  Plus,
+  PlayCircle
 } from 'lucide-react';
 import {api} from '@/api';
 import {Course} from '@/types';
 import { StandardCourseCard } from '@/components/courses/StandardCourseCard';
+import { Badge } from "@/components/ui/badge";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -58,10 +60,8 @@ const HomePage: React.FC = () => {
     const fetchContinueLearning = async () => {
       try {
         const courseRes = await api.getContinueLearning();
-        if (Array.isArray(courseRes) && courseRes.length > 0) {
-          setContinueLearning(courseRes[0]);
-        } else {
-          setContinueLearning(null);
+        if(courseRes){
+          setContinueLearning(courseRes);
         }
       } catch (error) {
         console.error('Failed to fetch continue learning:', error);
@@ -75,33 +75,66 @@ const HomePage: React.FC = () => {
 
   // 计算课程进度的函数
   const calculateProgress = (course: Course) => {
-    const totalLessons = course?.units?.reduce((sum, unit) => sum + unit.totalLessons, 0) || 0;
-    const completedLessons = course?.units?.reduce((sum, unit) => sum + unit.completedLessons, 0) || 0;
+    if (!course.chapters) return 0;
+    let totalLessons = 0;
+    let completedLessons = 0;
+
+    course.chapters.forEach(chapter => {
+      if (chapter.lessons) {
+        totalLessons += chapter.lessons.length;
+        completedLessons += chapter.lessons.filter(l => l.isCompleted).length;
+      }
+    });
+
     return totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
   };
 
   // 计算当前学习状态信息
   const getLearningStatus = (course: Course) => {
-    const currentUnitIndex = course?.units?.findIndex(
-      unit => unit.completedLessons < unit.totalLessons
-    );
-
-    if (currentUnitIndex === -1) {
+    if (!course.chapters || course.chapters.length === 0) {
       return {
-        currentChapter: course?.units?.length || 0,
+        currentChapter: 0,
         remainingLessons: 0,
-        isCompleted: true
+        isCompleted: false,
+        currentLesson: null,
+        currentChapterObj: null
       };
     }
 
-    const currentUnit = course?.units?.[currentUnitIndex];
-    const remainingLessons = (currentUnit?.totalLessons || 0) - (currentUnit?.completedLessons || 0);
+    const currentChapterIndex = course.chapters.findIndex(
+      chapter => chapter.lessons?.some(lesson => !lesson.isCompleted)
+    );
+
+    if (currentChapterIndex === -1) {
+      return {
+        currentChapter: course.chapters.length,
+        remainingLessons: 0,
+        isCompleted: true,
+        currentLesson: null,
+        currentChapterObj: null
+      };
+    }
+
+    const currentChapter = course.chapters[currentChapterIndex];
+    const currentLesson = currentChapter.lessons?.find(lesson => !lesson.isCompleted);
+    const remainingLessons = currentChapter.lessons?.filter(lesson => !lesson.isCompleted).length || 0;
 
     return {
-      currentChapter: currentUnitIndex + 1,
+      currentChapter: currentChapterIndex + 1,
       remainingLessons,
-      isCompleted: false
+      isCompleted: false,
+      currentLesson,
+      currentChapterObj: currentChapter
     };
+  };
+
+  const handleContinueLearning = (course: Course) => {
+    const status = getLearningStatus(course);
+    if (status.currentLesson && status.currentChapterObj) {
+      window.location.href = `/course/learn?courseUuid=${course.uuid}&chapterUuid=${status.currentChapterObj.uuid}&lessonUuid=${status.currentLesson.uuid}`;
+    } else {
+      navigate(`/courses/${course.uuid}`);
+    }
   };
 
   return (
@@ -115,15 +148,6 @@ const HomePage: React.FC = () => {
             </h2>
             <p className="text-gray-300">今天也要开心学习哦～</p>
           </div>
-          {!isLoadingContinueLearning && continueLearning && (
-            <Button 
-              className="bg-white text-gray-900 hover:bg-gray-100 w-full md:w-auto"
-              onClick={() => navigate(`/courses/${continueLearning.uuid}`)}
-            >
-              继续学习
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          )}
         </div>
       </div>
 
@@ -134,30 +158,71 @@ const HomePage: React.FC = () => {
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-4">当前进度</h3>
           <Card 
-            className="p-6 border border-gray-200 hover:border-gray-900 transition-colors cursor-pointer group"
-            onClick={() => navigate(`/courses/${continueLearning.uuid}`)}
+            className="relative overflow-hidden border-none shadow-xl bg-slate-900 text-white cursor-pointer group min-h-[200px]"
+            onClick={() => handleContinueLearning(continueLearning)}
           >
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h4 className="text-xl font-medium text-gray-900 mb-1">{continueLearning.title}</h4>
-                <p className="text-sm text-gray-500">
-                  {(() => {
-                    const status = getLearningStatus(continueLearning);
-                    if (status.isCompleted) return '课程已完成';
-                    return `第 ${status.currentChapter} 章 · 还需完成 ${status.remainingLessons} 节课`;
-                  })()}
-                </p>
-              </div>
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-gray-900 transition-colors">
-                <BookOpen className="w-5 h-5 text-gray-900 group-hover:text-white transition-colors" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">总进度</span>
-                <span className="font-medium text-gray-900">{Math.round(calculateProgress(continueLearning))}%</span>
-              </div>
-              <Progress value={calculateProgress(continueLearning)} className="h-2 bg-gray-100" />
+            {/* 背景图 - 使用课程封面 */}
+            {continueLearning.coverImageUrl && (
+                <div className="absolute inset-0 z-0">
+                    <img 
+                        src={continueLearning.coverImageUrl} 
+                        alt="" 
+                        className="w-full h-full object-cover opacity-40 blur-sm scale-105 group-hover:scale-110 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/80 to-transparent" />
+                </div>
+            )}
+            
+            {/* 装饰背景 (无封面时显示) */}
+            {!continueLearning.coverImageUrl && (
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-900 to-slate-800">
+                    <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                        <BookOpen className="w-64 h-64 transform translate-x-12 -translate-y-12" />
+                    </div>
+                </div>
+            )}
+            
+            <div className="relative z-10 p-6 flex flex-col h-full justify-between">
+                {/* 顶部区域：标题和图标 */}
+                <div className="flex items-start justify-between mb-6">
+                    <div className="pr-12">
+                        <h4 className="text-xl font-bold text-white mb-2 line-clamp-2 leading-relaxed">
+                            {continueLearning.title}
+                        </h4>
+                        <p className="text-sm text-slate-300">
+                            {(() => {
+                                const status = getLearningStatus(continueLearning);
+                                if (status.isCompleted) return '课程已完成';
+                                return `第 ${status.currentChapter} 章 · 还需完成 ${status.remainingLessons} 节课`;
+                            })()}
+                        </p>
+                    </div>
+                    <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm flex-shrink-0">
+                        <BookOpen className="w-6 h-6 text-white" />
+                    </div>
+                </div>
+
+                {/* 底部区域：进度条和按钮 */}
+                <div className="space-y-4 mt-auto">
+                    <div className="flex justify-between items-end">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/20 backdrop-blur-md border border-white/10 shadow-sm">
+                            <span className="text-xs text-slate-200 font-medium">总进度</span>
+                            <span className="text-sm font-bold text-white">{Math.round(calculateProgress(continueLearning))}%</span>
+                        </div>
+                        
+                        <Button 
+                            size="sm" 
+                            className="rounded-full px-5 bg-white text-slate-900 hover:bg-blue-50 font-medium h-9 text-xs shadow-lg shadow-black/10 transition-all hover:scale-105 active:scale-95"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleContinueLearning(continueLearning);
+                            }}
+                        >
+                            继续学习
+                        </Button>
+                    </div>
+                    <Progress value={calculateProgress(continueLearning)} className="h-1.5 bg-slate-700/50" />
+                </div>
             </div>
           </Card>
         </div>
@@ -179,7 +244,11 @@ const HomePage: React.FC = () => {
             ))
           ) : myCourses.length > 0 ? (
             myCourses.slice(0, 3).map(course => (
-              <StandardCourseCard key={course.uuid} course={course} />
+              <StandardCourseCard 
+                key={course.uuid} 
+                course={course} 
+                isHighlighted={continueLearning?.uuid === course.uuid}
+              />
             ))
           ) : (
             <div className="col-span-full p-8 text-center border border-dashed border-gray-300 rounded-lg">

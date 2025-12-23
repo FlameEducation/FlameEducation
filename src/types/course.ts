@@ -17,6 +17,8 @@ export interface Course {
   sequentialLearn: boolean;
 }
 
+export type UserCourse = Course;
+
 export interface Chapter {
   uuid: string;
   courseUuid?: string;

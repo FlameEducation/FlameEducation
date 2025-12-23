@@ -25,7 +25,6 @@ import {useEffect} from 'react';
 import {initDynamicVH} from '@/utils/viewport';
 import ReactCodeTest from '@/pages/test/ReactCodeTest';
 import {useAudioUnlock} from './hooks/useAudioUnlock.ts'; // 引入全局音频解锁Hook
-import {GameSoundService} from './services/soundService.ts'; // 引入音效服务
 import MindMapTest from '@/pages/test/MindMapTest';
 import AvatarAnimationTest from '@/pages/test/AvatarAnimationTest';
 
@@ -38,7 +37,6 @@ function App() {
   // 初始化全局服务
   useEffect(() => {
     initDynamicVH();
-    GameSoundService.initialize(); // 初始化音效服务
   }, []);
 
   return (

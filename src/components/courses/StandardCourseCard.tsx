@@ -2,28 +2,47 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Trophy, BookOpen } from 'lucide-react';
+import { Trophy, BookOpen, PlayCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Course } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 interface StandardCourseCardProps {
   course: Course;
   className?: string;
+  isHighlighted?: boolean;
 }
 
-export const StandardCourseCard: React.FC<StandardCourseCardProps> = ({ course, className }) => {
+export const StandardCourseCard: React.FC<StandardCourseCardProps> = ({ course, className, isHighlighted }) => {
   const navigate = useNavigate();
 
   // 计算总课时和已完成课时
   const totalLessons = course?.totalLessons || 0;
   let completedLessons = 0;
+  let currentLessonInfo: { chapterUuid: string, lessonUuid: string } | null = null;
+
   for(let chapter of course?.chapters || []) {
     for(let lesson of chapter.lessons) {
       if(lesson.isCompleted) {
         completedLessons += 1;
+      } else if (!currentLessonInfo) {
+        currentLessonInfo = {
+          chapterUuid: chapter.uuid,
+          lessonUuid: lesson.uuid
+        };
       }
     }
   }
+
+  const handleLearnClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (currentLessonInfo) {
+      window.location.href = `/course/learn?courseUuid=${course.uuid}&chapterUuid=${currentLessonInfo.chapterUuid}&lessonUuid=${currentLessonInfo.lessonUuid}`;
+    } else {
+      navigate(`/courses/${course.uuid}`);
+    }
+  };
 
   // 计算里程碑位置（基于 chapters）
   const milestones = course?.chapters?.map((chapter, index: number) => ({
@@ -53,11 +72,17 @@ export const StandardCourseCard: React.FC<StandardCourseCardProps> = ({ course, 
   return (
     <Card 
       className={cn(
-        "group cursor-pointer overflow-hidden transition-all hover:shadow-lg flex flex-col h-full",
+        "group cursor-pointer overflow-hidden transition-all hover:shadow-lg flex flex-col h-full relative",
+        isHighlighted && "border-2 border-primary ring-2 ring-primary/20",
         className
       )}
       onClick={() => navigate(`/courses/${course.uuid}`)}
     >
+      {isHighlighted && (
+        <div className="absolute top-2 right-2 z-10">
+          <Badge className="bg-primary text-white shadow-sm">正在学习</Badge>
+        </div>
+      )}
       {/* 封面区域 - 调整为更窄更高的比例，这里使用 aspect-[4/3] */}
       <div className="relative aspect-[16/9] overflow-hidden bg-gray-100">
         {course.coverImageUrl ? (
@@ -73,6 +98,13 @@ export const StandardCourseCard: React.FC<StandardCourseCardProps> = ({ course, 
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
         
+        {/* 播放按钮悬浮层 */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
+           <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-transform" onClick={handleLearnClick}>
+              <PlayCircle className="w-8 h-8 text-primary" />
+           </div>
+        </div>
+
         {/* 装饰性元素 */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 pointer-events-none" />
       </div>
@@ -119,6 +151,17 @@ export const StandardCourseCard: React.FC<StandardCourseCardProps> = ({ course, 
                 title={milestone.title}
               />
             ))}
+          </div>
+
+          <div className="pt-1">
+            <Button 
+              variant={isHighlighted ? "default" : "outline"} 
+              size="sm" 
+              className="w-full rounded-full text-xs h-8"
+              onClick={handleLearnClick}
+            >
+              {completedLessons === totalLessons ? "重新学习" : "继续学习"}
+            </Button>
           </div>
 
           {/*/!* 成就提示 *!/*/}

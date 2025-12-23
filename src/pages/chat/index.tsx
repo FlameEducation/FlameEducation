@@ -16,6 +16,7 @@ import { useEventBus, EventBusProvider } from './context/EventBusContext.tsx';
 import { ImageProvider } from './context/ImageContext.tsx';
 import { BlackboardProvider } from './context/BlackboardContext.tsx';
 import { MindMapProvider } from './context/MindMapContext.tsx';
+import { GameSoundService } from '@/services/soundService.ts';
 
 interface ChatMainAreaProps {
   chatViewMode: 'teacher' | 'list';
@@ -252,6 +253,11 @@ const ChatContent: React.FC = () => {
   
   const [showSettings, setShowSettings] = useState(false);
   const [showLessonInfo, setShowLessonInfo] = useState(false);
+
+  // 初始化音效服务 - 仅在进入聊天页面时加载
+  useEffect(() => {
+    GameSoundService.initialize();
+  }, []);
   
   // 教学模式相关状态 - 使用全局设置
   const [chatViewMode, setChatViewMode] = useChatViewMode();

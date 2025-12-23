@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button.tsx';
-import { Settings, Loader2, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { Settings, Loader2, ZoomIn, ZoomOut, RotateCcw, PanelRight } from 'lucide-react';
 import { cn } from '@/lib/utils.ts';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { useClassStatusContext } from "@/pages/chat/context/ClassStatusContext.tsx";
+import { useChatHistoryContext } from '@/pages/chat/context/ChatHistoryContext.tsx';
+import { useExerciseContext } from '@/pages/chat/context/ExerciseContext.tsx';
 import { GameSoundService } from '@/services/soundService.ts';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip.tsx';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -253,6 +255,21 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   const [isLessonInfoOpen, setIsLessonInfoOpen] = useState(false);
   const titleAnimationControls = useAnimation();
 
+  const { 
+    isRightPanelOpen, 
+    setIsRightPanelOpen, 
+    getAllBlackboards, 
+    getAllMindMaps, 
+    getAllImages 
+  } = useChatHistoryContext();
+  const { exerciseDataMap } = useExerciseContext();
+
+  const hasRightPanelContent = 
+    getAllBlackboards().length > 0 || 
+    getAllMindMaps().length > 0 || 
+    getAllImages().length > 0 || 
+    exerciseDataMap.size > 0;
+
   const {
     lessonUuid,
     lessonInfo,
@@ -405,6 +422,24 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
                     <span className="font-medium text-purple-700 text-xs">{hitCount}</span>
                   </motion.div>
                 </button>
+              </div>
+            )}
+
+            {/* 右侧面板开关 - 仅在PC端且有内容时显示 */}
+            {hasRightPanelContent && (
+              <div className="hidden md:flex items-center mx-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
+                  className={cn(
+                    "h-8 w-8 p-0 hover:bg-gray-100/80 transition-all rounded-full",
+                    isRightPanelOpen ? "bg-gray-100 text-blue-600" : "text-gray-500"
+                  )}
+                  title={isRightPanelOpen ? "隐藏右侧面板" : "显示右侧面板"}
+                >
+                  <PanelRight className="h-4 w-4" />
+                </Button>
               </div>
             )}
 

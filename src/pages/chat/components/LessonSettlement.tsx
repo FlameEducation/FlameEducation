@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Trophy, Sparkles, Gift, CheckCircle, Loader2 } from 'lucide-react';
 import { getLessonRewardList, receiveAllLessonRewards, getRewardStatus } from '@/api/reward';
 import { LessonRewardItem, RewardStatus } from '@/types/reward';
+import { GameSoundService } from '@/services/soundService';
 
 interface LessonSettlementProps {
   isOpen: boolean;
@@ -96,8 +97,7 @@ export const LessonSettlement: React.FC<LessonSettlementProps> = ({
       setAnimationPhase('celebration');
       
       // 播放庆祝音效
-      const audio = new Audio('/audio/celebration.mp3');
-      audio.play().catch(() => {});
+      GameSoundService.play('celebration');
       
       // 延迟关闭
       setTimeout(() => {

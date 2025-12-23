@@ -23,6 +23,27 @@ const CourseDetailPage: React.FC = () => {
     const [courseDetail, setcourseDetail] = useState<Course | null>(null);
     const [activeTab, setActiveTab] = useState<"intro" | "curriculum">("intro");
     const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+    const [nextLesson, setNextLesson] = useState<{chapter: Chapter, lesson: Lesson} | null>(null);
+
+    // 计算下一节课
+    useEffect(() => {
+        if (courseDetail?.chapters) {
+            for (const chapter of courseDetail.chapters) {
+                const lesson = chapter.lessons?.find(l => !l.isCompleted);
+                if (lesson) {
+                    setNextLesson({chapter, lesson});
+                    return;
+                }
+            }
+            setNextLesson(null);
+        }
+    }, [courseDetail]);
+
+    const handleContinueLearning = () => {
+        if (nextLesson) {
+             window.location.href = `/course/learn?courseUuid=${nextLesson.chapter.courseUuid}&chapterUuid=${nextLesson.chapter.uuid}&lessonUuid=${nextLesson.lesson.uuid}`;
+        }
+    };
 
     // 设置默认tab为课程目录
     const defaultTab: "intro" | "curriculum" = useMemo(() => {
@@ -138,7 +159,7 @@ const CourseDetailPage: React.FC = () => {
                         variant="ghost"
                         size="icon"
                         className="rounded-full"
-                        onClick={() => navigate(-1)}
+                        onClick={() => navigate('/')}
                     >
                         <ArrowLeft className="w-5 h-5"/>
                     </Button>
@@ -150,31 +171,13 @@ const CourseDetailPage: React.FC = () => {
                 {/* 课程封面 */}
                 <CourseCover/>
 
-                {/* 课程基本信息 */}
-                <div className="px-4 py-4 bg-white border-b">
-                    <h1 className="text-xl font-bold mb-2">{courseDetail.title}</h1>
-                    <p className="text-gray-600 mb-3">{courseDetail.description}</p>
-                    <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
-                        <div className="flex items-center gap-1">
-                            <Clock className="w-4 h-4"/>
-                            {courseDetail.totalChapters} 章 · {courseDetail.totalLessons} 课时
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <BookOpen className="w-4 h-4"/>
-                            {courseDetail.totalDurationInMinutes} 分钟
-                        </div>
-                    </div>
-                </div>
-
-                {/* 试用引导卡片 - 仅在未购买时显示 */}
-
                 {/* 内容标签页 */}
-                <div className="border-b bg-white">
+                <div className="border-b bg-white sticky top-14 z-40">
                     <div className="flex">
                         <Button
                             variant="ghost"
                             className={cn(
-                                "flex-1 rounded-none border-b-2 border-transparent",
+                                "flex-1 rounded-none border-b-2 border-transparent h-12 font-medium",
                                 activeTab === 'intro' && "border-blue-600 text-blue-600"
                             )}
                             onClick={() => setActiveTab('intro')}
@@ -184,7 +187,7 @@ const CourseDetailPage: React.FC = () => {
                         <Button
                             variant="ghost"
                             className={cn(
-                                "flex-1 rounded-none border-b-2 border-transparent",
+                                "flex-1 rounded-none border-b-2 border-transparent h-12 font-medium",
                                 activeTab === 'curriculum' && "border-blue-600 text-blue-600"
                             )}
                             onClick={() => setActiveTab('curriculum')}
@@ -197,22 +200,29 @@ const CourseDetailPage: React.FC = () => {
                 {/* 标签页内容 */}
                 <div className="pb-20">
                     {activeTab === 'intro' ? (
-                        <div className="p-4 space-y-6">
-
-                            {/* 学习收获 */}
-                            {/* <Card>
-                                <div className="p-4">
-                                    <h2 className="text-lg font-bold mb-4">学习收获</h2>
-                                    <div className="space-y-3">
-                                        {courseDetail.whatYouWillLearn?.map((item, index) => (
-                                            <div key={index} className="flex items-center gap-2">
-                                                <CheckCircle className="w-5 h-5 text-green-500"/>
-                                                <span className="text-sm">{item}</span>
-                                            </div>
-                                        )) || []}
+                        <div className="bg-white min-h-[calc(100vh-300px)]">
+                            {/* 课程基本信息 - 移入 Tab */}
+                            <div className="px-4 py-6 border-b">
+                                <h1 className="text-xl font-bold mb-3 text-gray-900">{courseDetail.title}</h1>
+                                <p className="text-gray-600 mb-4 text-sm leading-relaxed">{courseDetail.description}</p>
+                                <div className="flex items-center gap-4 text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
+                                    <div className="flex items-center gap-1.5">
+                                        <Clock className="w-3.5 h-3.5"/>
+                                        {courseDetail.totalChapters} 章 · {courseDetail.totalLessons} 课时
+                                    </div>
+                                    <div className="w-px h-3 bg-gray-300" />
+                                    <div className="flex items-center gap-1.5">
+                                        <BookOpen className="w-3.5 h-3.5"/>
+                                        {courseDetail.totalDurationInMinutes} 分钟
                                     </div>
                                 </div>
-                            </Card> */}
+                            </div>
+
+                            {/* 学习收获 */}
+                            {/* <div className="p-4">
+                                <h2 className="text-base font-bold mb-3">学习收获</h2>
+                                ...
+                            </div> */}
                         </div>
                     ) : (
                         <div className="p-4 space-y-4">
@@ -223,6 +233,7 @@ const CourseDetailPage: React.FC = () => {
                                     chapter={chapter}
                                     enableSequentialLearning={courseDetail.sequentialLearn}
                                     allChapters={courseDetail.chapters}
+                                    currentLessonUuid={nextLesson?.lesson.uuid}
                                 />
                             ))}
                         </div>
@@ -230,7 +241,28 @@ const CourseDetailPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* 底部购买栏 - 仅在未购买时显示 */}
+            {/* 底部操作栏 */}
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 z-50">
+                {nextLesson ? (
+                    <div className="flex items-center gap-4 mb-[env(safe-area-inset-bottom)]">
+                        <div className="flex-1 min-w-0">
+                            <div className="text-xs text-gray-500 mb-0.5">继续学习</div>
+                            <div className="text-sm font-medium truncate">{nextLesson.lesson.title}</div>
+                        </div>
+                        <Button 
+                            className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-900/20 rounded-full px-6"
+                            onClick={handleContinueLearning}
+                        >
+                            <PlayCircle className="w-4 h-4 mr-2" />
+                            继续
+                        </Button>
+                    </div>
+                ) : (
+                    <Button className="w-full mb-[env(safe-area-inset-bottom)]" disabled variant="outline">
+                        课程已完成
+                    </Button>
+                )}
+            </div>
         </div>
     );
 
@@ -307,10 +339,53 @@ const CourseDetailPage: React.FC = () => {
                     </div>
 
                     {/* 右侧内容 */}
-                    <div className="lg:w-1/3">
+                    <div className="lg:w-1/3 space-y-6">
+                        {/* 学习进度卡片 */}
+                        <div className="bg-white rounded-lg p-6 shadow-sm border">
+                            <div className="mb-6">
+                                <div className="flex justify-between items-end mb-2">
+                                    <span className="text-gray-600 font-medium">学习进度</span>
+                                    <span className="text-2xl font-bold text-blue-600">
+                                        {courseDetail.totalLessons > 0 
+                                            ? Math.round((courseDetail.chapters.reduce((acc, ch) => acc + (ch.lessons?.filter(l => l.isCompleted).length || 0), 0) / courseDetail.totalLessons) * 100) 
+                                            : 0}%
+                                    </span>
+                                </div>
+                                <div className="w-full bg-gray-100 rounded-full h-2">
+                                    <div 
+                                        className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                                        style={{ width: `${courseDetail.totalLessons > 0 
+                                            ? (courseDetail.chapters.reduce((acc, ch) => acc + (ch.lessons?.filter(l => l.isCompleted).length || 0), 0) / courseDetail.totalLessons) * 100 
+                                            : 0}%` }}
+                                    />
+                                </div>
+                            </div>
+
+                            {nextLesson ? (
+                                <div>
+                                    <div className="text-sm text-gray-500 mb-2">下一节课</div>
+                                    <div className="font-medium text-gray-900 mb-4 line-clamp-2">
+                                        {nextLesson.chapter.title} - {nextLesson.lesson.title}
+                                    </div>
+                                    <Button 
+                                        className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-900/20"
+                                        size="lg"
+                                        onClick={handleContinueLearning}
+                                    >
+                                        <PlayCircle className="w-5 h-5 mr-2" />
+                                        继续学习
+                                    </Button>
+                                </div>
+                            ) : (
+                                <Button className="w-full" disabled variant="outline">
+                                    <CheckCircle className="w-5 h-5 mr-2" />
+                                    课程已完成
+                                </Button>
+                            )}
+                        </div>
 
                         {/* 课程目录 */}
-                        <div className="bg-white rounded-lg p-6">
+                        <div className="bg-white rounded-lg p-6 shadow-sm border">
                             <h2 className="text-xl font-bold mb-4">课程目录</h2>
                             <div className="space-y-4">
                                 {courseDetail.chapters.map((chapter) => (
@@ -319,6 +394,7 @@ const CourseDetailPage: React.FC = () => {
                                         chapter={chapter}
                                         enableSequentialLearning={courseDetail.sequentialLearn}
                                         allChapters={courseDetail.chapters}
+                                        currentLessonUuid={nextLesson?.lesson.uuid}
                                     />
                                 ))}
                             </div>
@@ -337,8 +413,18 @@ const ChapterCard: React.FC<{
     chapter: Chapter;
     enableSequentialLearning?: boolean; // 新增：是否启用顺序学习
     allChapters?: Chapter[]; // 新增：所有章节数据，用于判断前置条件
-}> = ({chapter, enableSequentialLearning = false, allChapters = []}) => {
+    currentLessonUuid?: string; // 新增：当前正在学习的课程UUID
+}> = ({chapter, enableSequentialLearning = false, allChapters = [], currentLessonUuid}) => {
+    // 如果当前章节包含正在学习的课程，默认展开
+    const hasCurrentLesson = chapter.lessons.some(l => l.uuid === currentLessonUuid);
     const [isExpanded, setIsExpanded] = useState(true);
+
+    // 当 currentLessonUuid 改变时，如果包含该课程，则展开
+    useEffect(() => {
+        if (hasCurrentLesson) {
+            setIsExpanded(true);
+        }
+    }, [hasCurrentLesson]);
 
     // 计算章节完成进度
     const completedLessons = chapter.lessons.filter(lesson => lesson.isCompleted).length;
@@ -443,26 +529,31 @@ const ChapterCard: React.FC<{
             {/* 课程列表 */}
             {isExpanded && (
                 <div className="divide-y">
-                    {chapter.lessons.map((lesson) => (
+                    {chapter.lessons.map((lesson) => {
+                        const isCurrent = lesson.uuid === currentLessonUuid;
+                        return (
                         <div
                             key={lesson.uuid}
                             className={cn(
-                                "p-3 hover:bg-gray-50 transition-colors cursor-pointer"
+                                "p-3 hover:bg-gray-50 transition-colors cursor-pointer border-l-4",
+                                isCurrent ? "bg-blue-50/50 border-l-blue-500" : "border-l-transparent"
                             )}
                             onClick={() => handleLessonClick(lesson, chapter)}
                         >
                             <div className="flex items-center gap-3">
                                 {/* 课程状态图标 */}
                                 <div className={cn(
-                                    "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0",
-                                    lesson.isCompleted ? "bg-green-100" : "bg-blue-100"
+                                    "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
+                                    lesson.isCompleted ? "bg-green-100" : isCurrent ? "bg-blue-100 animate-pulse" : "bg-gray-100"
                                 )}>
                                     {lesson.isCompleted ? (
                                         <CheckCircle className="w-4 h-4 text-green-600"/>
                                     ) : checkLessonLock(lesson, chapter) ? (
                                         <Lock className="w-4 h-4 text-gray-400"/>
+                                    ) : isCurrent ? (
+                                        <PlayCircle className="w-4 h-4 text-blue-600"/>
                                     ) : (
-                                        <BookOpen className="w-4 h-4 text-blue-600"/>
+                                        <BookOpen className="w-4 h-4 text-gray-500"/>
                                     )}
                                 </div>
 
@@ -472,13 +563,7 @@ const ChapterCard: React.FC<{
                                     checkLessonLock(lesson, chapter) && "opacity-60"
                                 )}>
                                     <div className="flex items-center gap-2">
-                                        <span className="font-medium truncate">{lesson.title}</span>
-                                        {lesson.isFree && !lesson.isCompleted && (
-                                            <Badge variant="default"
-                                                   className="text-[10px] bg-green-500 hover:bg-green-600 text-white">
-                                                免费
-                                            </Badge>
-                                        )}
+                                        <span className={cn("font-medium truncate", isCurrent && "text-blue-700")}>{lesson.title}</span>
                                     </div>
                                     <div className="flex items-center gap-2 mt-1">
                     <span className="text-xs text-gray-500 flex items-center gap-1">
@@ -486,7 +571,7 @@ const ChapterCard: React.FC<{
                         {lesson.duration}分钟
                     </span>
                                         {lesson.isCompleted && (
-                                            <Badge variant="outline" className="text-[10px]">
+                                            <Badge variant="outline" className="text-[10px] h-5 px-1.5 border-green-200 text-green-700 bg-green-50">
                                                 已完成
                                             </Badge>
                                         )}
@@ -508,7 +593,7 @@ const ChapterCard: React.FC<{
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            className="text-blue-600"
+                                            className={cn(isCurrent ? "text-blue-600 bg-blue-100 hover:bg-blue-200" : "text-gray-400 hover:text-blue-600")}
                                             onClick={(e) => {
                                                 e.stopPropagation(); // 阻止事件冒泡
                                                 handleLessonClick(lesson, chapter);
@@ -524,7 +609,7 @@ const ChapterCard: React.FC<{
                                 </div>
                             </div>
                         </div>
-                    ))}
+                    )})}
                 </div>
             )}
         </Card>

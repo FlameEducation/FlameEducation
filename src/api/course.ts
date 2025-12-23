@@ -6,8 +6,8 @@ import {
 } from '@/types';
 
 // 获取继续学习的课程
-export const getContinueLearning = async (): Promise<Course[]> => {
-  return request.get<any, Course[]>('/api/course/continueCourse');
+export const getContinueLearning = async (): Promise<Course> => {
+  return request.get<any, Course>('/api/course/continueCourse');
 };
 
 // 获取课程详情
